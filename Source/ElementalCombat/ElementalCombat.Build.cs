@@ -18,13 +18,20 @@ public class ElementalCombat : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate"
+			"Slate",
+			"Niagara",
+			"NiagaraCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"ElementalCombat",
+			"ElementalCombat/AI",
+			"ElementalCombat/Animation",
+			"ElementalCombat/Characters",
+			"ElementalCombat/Combat",
+			"ElementalCombat/Combat/Projectiles",
 			"ElementalCombat/Variant_Combat",
 			"ElementalCombat/Variant_Combat/AI",
 			"ElementalCombat/Variant_Combat/Animation",

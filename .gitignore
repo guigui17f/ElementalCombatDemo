@@ -78,3 +78,5 @@ Config/DefaultEditorPerProjectUserSettings.ini
 .idea/.idea.ElementalCombat.dir/.idea/vcs.xml
 .claude/settings.local.json
 ElementalCombat.uproject.DotSettings.user
+.idea/.idea.ElementalCombat.dir/.idea/copilot.data.migration.agent.xml
+.idea/.idea.ElementalCombat.dir/.idea/copilot.data.migration.edit.xml

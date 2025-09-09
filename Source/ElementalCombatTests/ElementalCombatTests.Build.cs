@@ -13,22 +13,20 @@ public class ElementalCombatTests : ModuleRules
 		{
 			PublicDependencyModuleNames.AddRange(new string[] {
 				"Core",
-				"CoreUObject",
+				"CoreUObject", 
 				"Engine",
 				"UnrealEd",
 				"ElementalCombat"  // 依赖主游戏模块
 			});
 			
 			// 自动化测试框架依赖
-			if (Target.bBuildDeveloperTools || 
-			    (Target.Configuration != UnrealTargetConfiguration.Shipping && 
-			     Target.Configuration != UnrealTargetConfiguration.Test))
-			{
-				PrivateDependencyModuleNames.AddRange(new string[] {
-					"AutomationController",
-					"FunctionalTesting"
-				});
-			}
+			PrivateDependencyModuleNames.AddRange(new string[] {
+				"AutomationController",
+				"FunctionalTesting",
+				"ToolMenus",
+				"Slate",
+				"SlateCore"
+			});
 		}
 		
 		// 包含路径

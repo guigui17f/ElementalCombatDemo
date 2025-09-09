@@ -18,14 +18,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Enemy Spawner")
 	bool bCanBeReactivated = true;
 
-	/** 保存初始生成数量，用于重置 */
-	UPROPERTY(VisibleAnywhere, Category="Enemy Spawner")
-	int32 OriginalSpawnCount = 1;
-
 	/** 重新激活次数限制（-1表示无限制） */
 	UPROPERTY(EditAnywhere, Category="Enemy Spawner", meta = (ClampMin = -1, ClampMax = 100))
 	int32 MaxReactivations = -1;
 
+	/** 保存初始生成数量，用于重置 */
+	UPROPERTY(VisibleAnywhere, Category="Enemy Spawner")
+	int32 OriginalSpawnCount = 1;
+	
 	/** 当前已重新激活次数 */
 	UPROPERTY(VisibleAnywhere, Category="Enemy Spawner")
 	int32 CurrentReactivations = 0;
