@@ -17,17 +17,17 @@ class ELEMENTALCOMBAT_API UElementalEffectProcessor : public UObject
 
 public:
 	// ===========================================
-	// 金元素 - 伤害增强
+	// 通用伤害倍率应用
 	// ===========================================
 	
 	/**
-	 * 处理金元素伤害增强
+	 * 应用伤害倍率
 	 * @param BaseDamage 基础伤害
-	 * @param MetalData 金元素效果数据
-	 * @return 增强后的伤害
+	 * @param EffectData 元素效果数据（使用其DamageMultiplier字段）
+	 * @return 应用倍率后的伤害
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|Metal")
-	static float ProcessMetalDamage(float BaseDamage, const FElementalEffectData& MetalData);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|General")
+	static float ApplyDamageMultiplier(float BaseDamage, const FElementalEffectData& EffectData);
 
 	// ===========================================
 	// 木元素 - 吸血效果

@@ -5,17 +5,17 @@
 #include "ElementalCalculator.h"
 
 // ===========================================
-// 金元素 - 伤害增强
+// 通用伤害倍率应用
 // ===========================================
 
-float UElementalEffectProcessor::ProcessMetalDamage(float BaseDamage, const FElementalEffectData& MetalData)
+float UElementalEffectProcessor::ApplyDamageMultiplier(float BaseDamage, const FElementalEffectData& EffectData)
 {
-	if (BaseDamage < 0.0f || MetalData.DamageMultiplier < 0.0f)
+	if (BaseDamage < 0.0f || EffectData.DamageMultiplier < 0.0f)
 	{
 		return MIN_DAMAGE;
 	}
 
-	return BaseDamage * MetalData.DamageMultiplier;
+	return BaseDamage * EffectData.DamageMultiplier;
 }
 
 // ===========================================
@@ -53,7 +53,7 @@ float UElementalEffectProcessor::CalculateSlowedSpeed(float BaseSpeed, const FEl
 {
 	if (BaseSpeed < 0.0f)
 	{
-		return MIN_DAMAGE;
+		return 0.0f;
 	}
 
 	// 限制减速比例不超过100%
@@ -68,7 +68,7 @@ float UElementalEffectProcessor::CalculateSlowedAttackSpeed(float BaseAttackSpee
 {
 	if (BaseAttackSpeed < 0.0f)
 	{
-		return MIN_DAMAGE;
+		return 0.0f;
 	}
 
 	// 限制减速比例不超过100%
@@ -157,7 +157,7 @@ float UElementalEffectProcessor::ProcessDamage(float BaseDamage, EElementalType 
 	
 	if (AttackerElement == EElementalType::Metal)
 	{
-		ProcessedDamage = ProcessMetalDamage(BaseDamage, AttackerData);
+		ProcessedDamage = ApplyDamageMultiplier(BaseDamage, AttackerData);
 	}
 
 	// 然后应用元素相克修正

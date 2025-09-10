@@ -5,34 +5,34 @@
 #include "Combat/Elemental/ElementalEffectProcessor.h"
 
 /**
- * 金元素伤害处理测试
+ * 伤害倍率应用测试
  */
-ELEMENTAL_TEST(Combat.Elemental, ProcessMetalDamage)
-bool FProcessMetalDamageTest::RunTest(const FString& Parameters)
+ELEMENTAL_TEST(Combat.Elemental, ApplyDamageMultiplier)
+bool FApplyDamageMultiplierTest::RunTest(const FString& Parameters)
 {
-	FElementalEffectData MetalData;
-	MetalData.DamageMultiplier = 1.5f;
+	FElementalEffectData EffectData;
+	EffectData.DamageMultiplier = 1.5f;
 	
 	// 基础伤害处理
-	TestNearlyEqual(TEXT("100伤害增强到150"), 
-		UElementalEffectProcessor::ProcessMetalDamage(100.0f, MetalData), 150.0f, 0.01f);
-	TestNearlyEqual(TEXT("50伤害增强到75"), 
-		UElementalEffectProcessor::ProcessMetalDamage(50.0f, MetalData), 75.0f, 0.01f);
+	TestNearlyEqual(TEXT("100伤害1.5倍率变150"), 
+		UElementalEffectProcessor::ApplyDamageMultiplier(100.0f, EffectData), 150.0f, 0.01f);
+	TestNearlyEqual(TEXT("50伤害1.5倍率变75"), 
+		UElementalEffectProcessor::ApplyDamageMultiplier(50.0f, EffectData), 75.0f, 0.01f);
 	TestNearlyEqual(TEXT("0伤害仍为0"), 
-		UElementalEffectProcessor::ProcessMetalDamage(0.0f, MetalData), 0.0f, 0.01f);
+		UElementalEffectProcessor::ApplyDamageMultiplier(0.0f, EffectData), 0.0f, 0.01f);
 	
 	// 不同倍率测试
-	MetalData.DamageMultiplier = 2.0f;
+	EffectData.DamageMultiplier = 2.0f;
 	TestNearlyEqual(TEXT("2倍伤害"), 
-		UElementalEffectProcessor::ProcessMetalDamage(100.0f, MetalData), 200.0f, 0.01f);
+		UElementalEffectProcessor::ApplyDamageMultiplier(100.0f, EffectData), 200.0f, 0.01f);
 	
-	MetalData.DamageMultiplier = 1.0f;
+	EffectData.DamageMultiplier = 1.0f;
 	TestNearlyEqual(TEXT("1倍伤害不变"), 
-		UElementalEffectProcessor::ProcessMetalDamage(100.0f, MetalData), 100.0f, 0.01f);
+		UElementalEffectProcessor::ApplyDamageMultiplier(100.0f, EffectData), 100.0f, 0.01f);
 	
-	MetalData.DamageMultiplier = 0.5f;
+	EffectData.DamageMultiplier = 0.5f;
 	TestNearlyEqual(TEXT("0.5倍伤害减半"), 
-		UElementalEffectProcessor::ProcessMetalDamage(100.0f, MetalData), 50.0f, 0.01f);
+		UElementalEffectProcessor::ApplyDamageMultiplier(100.0f, EffectData), 50.0f, 0.01f);
 	
 	return true;
 }
@@ -275,7 +275,7 @@ bool FEffectBoundaryConditionsTest::RunTest(const FString& Parameters)
 	
 	// 测试负数伤害倍率
 	TestEffect.DamageMultiplier = -1.0f;
-	float Result = UElementalEffectProcessor::ProcessMetalDamage(100.0f, TestEffect);
+	float Result = UElementalEffectProcessor::ApplyDamageMultiplier(100.0f, TestEffect);
 	TestTrue(TEXT("负数倍率应该被修正"), Result >= 0.0f);
 	
 	// 测试超过100%的吸血
