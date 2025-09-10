@@ -149,9 +149,16 @@ void AAdvancedCombatCharacter::SetupPlayerInputComponent(UInputComponent* Player
 	// 调用父类实现
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	// 绑定元素切换输入
+	// 绑定输入
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
+		// 跳跃输入绑定
+		if (JumpAction)
+		{
+			EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+			EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		}
+
 		// 元素切换 - 1-5键
 		if (SwitchToMetalAction)
 		{
