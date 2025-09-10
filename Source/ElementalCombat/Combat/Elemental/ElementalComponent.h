@@ -8,6 +8,7 @@
 #include "ElementalComponent.generated.h"
 
 class ACombatProjectile;
+class UElementalDataAsset;
 
 // 元素变更委托
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnElementChanged, EElementalType, NewElement);
@@ -81,18 +82,35 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	bool HasElementData(EElementalType Element) const;
 
+	/**
+	 * 从ElementalDataAsset刷新元素数据
+	 */
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental")
+	void RefreshFromDataAsset();
+
+	/**
+	 * 获取当前使用的ElementalDataAsset
+	 * @return ElementalDataAsset引用
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
+	UElementalDataAsset* GetElementalDataAsset() const { return ElementalDataAsset; }
+
 public:
 	// 元素变更委托
 	UPROPERTY(BlueprintAssignable, Category = "ElementalCombat|Combat|Elemental")
 	FOnElementChanged OnElementChanged;
 
 protected:
+	// 元素配置数据资产（由全局配置管理器提供，不再允许直接编辑）
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ElementalCombat|Combat|Elemental")
+	UElementalDataAsset* ElementalDataAsset;
+
 	// 当前元素
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ElementalCombat|Combat|Elemental")
 	EElementalType CurrentElement;
 
-	// 元素效果数据映射
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental")
+	// 元素效果数据映射（运行时缓存，从DataAsset加载）
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ElementalCombat|Combat|Elemental")
 	TMap<EElementalType, FElementalEffectData> ElementEffectDataMap;
 
 private:

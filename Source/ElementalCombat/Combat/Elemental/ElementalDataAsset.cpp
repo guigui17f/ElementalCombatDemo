@@ -12,6 +12,7 @@ UElementalDataAsset::UElementalDataAsset()
 	bCacheBuilt = false;
 	
 	// 设置默认的元素效果数据
+	DefaultEffectData.Element = EElementalType::None;
 	DefaultEffectData.DamageMultiplier = 1.0f;
 	DefaultEffectData.LifeStealPercentage = 0.0f;
 	DefaultEffectData.SlowPercentage = 0.0f;
@@ -203,26 +204,22 @@ void UElementalDataAsset::BuildElementMaps()
 	ElementEffectMap.Empty();
 	ElementRelationshipMap.Empty();
 
-	// 构建元素效果映射
+	// 构建元素效果映射 - 使用Element字段作为键
 	for (const FElementalEffectData& Effect : ElementEffects)
 	{
-		// 注意：这里假设FElementalEffectData有一个Element字段
-		// 如果没有，需要调整数据结构或使用索引映射
-		// 临时解决方案：使用数组索引对应元素类型
-	}
-
-	// 由于FElementalEffectData没有Element字段，我们需要假设数组顺序对应元素类型
-	// 这里提供一个简化实现，实际使用时可能需要调整
-	for (int32 i = 0; i < ElementEffects.Num() && i < 6; ++i)
-	{
-		EElementalType ElementType = static_cast<EElementalType>(i);
-		ElementEffectMap.Add(ElementType, ElementEffects[i]);
+		if (Effect.Element != EElementalType::None)
+		{
+			ElementEffectMap.Add(Effect.Element, Effect);
+		}
 	}
 
 	// 构建元素关系映射
 	for (const FElementalRelationship& Relationship : ElementRelationships)
 	{
-		ElementRelationshipMap.Add(Relationship.Element, Relationship);
+		if (Relationship.Element != EElementalType::None)
+		{
+			ElementRelationshipMap.Add(Relationship.Element, Relationship);
+		}
 	}
 
 	bCacheBuilt = true;

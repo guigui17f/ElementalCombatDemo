@@ -35,6 +35,7 @@ struct ELEMENTALCOMBAT_API FElementalEffectData
 
 	FElementalEffectData()
 	{
+		Element = EElementalType::None;
 		DamageMultiplier = 1.0f;
 		LifeStealPercentage = 0.0f;
 		SlowPercentage = 0.0f;
@@ -45,6 +46,10 @@ struct ELEMENTALCOMBAT_API FElementalEffectData
 		DamageReduction = 0.0f;
 		ProjectileClass = nullptr;
 	}
+
+	// 元素类型标识
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental")
+	EElementalType Element;
 
 	// 金元素 - 伤害倍率
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental", meta = (ClampMin = "0.0"))
