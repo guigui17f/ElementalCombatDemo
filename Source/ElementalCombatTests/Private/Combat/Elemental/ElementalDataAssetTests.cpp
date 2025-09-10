@@ -67,10 +67,12 @@ bool FBlueprintFunctionTest::RunTest(const FString& Parameters)
 {
 	UElementalDataAsset* Asset = NewObject<UElementalDataAsset>();
 	
-	// 测试蓝图可调用的获取函数
+	// 测试蓝图可调用的获取函数 - 防御性设计总是返回有效数据
 	FElementalEffectData OutEffectData;
 	bool bFound = Asset->GetElementEffectData(EElementalType::Fire, OutEffectData);
-	TestFalse(TEXT("未配置元素返回false"), bFound);
+	TestTrue(TEXT("防御性设计总是返回true"), bFound);
+	TestEqual(TEXT("未配置元素返回默认数据"), OutEffectData.Element, EElementalType::None);
+	TestEqual(TEXT("默认伤害倍率为1.0"), OutEffectData.DamageMultiplier, 1.0f);
 	
 	FElementalRelationship OutRelationship;
 	bool bRelationFound = Asset->GetElementRelationship(EElementalType::Fire, OutRelationship);
