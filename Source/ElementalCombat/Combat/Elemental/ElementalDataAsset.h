@@ -98,9 +98,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Defaults")
 	FElementalEffectData DefaultEffectData;
 
-private:
-	// 构建元素映射缓存
+	// 构建元素映射缓存（派生类可访问）
 	void BuildElementMaps();
+
+private:
 
 	// 元素效果映射缓存（运行时用）
 	UPROPERTY(Transient)

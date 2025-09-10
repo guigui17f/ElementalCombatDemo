@@ -1,10 +1,17 @@
 // Copyright 2025 guigui17f. All Rights Reserved.
 
 #include "Combat/Elemental/ElementalCalculator.h"
+#include "ElementalConfigManager.h"
 
-bool UElementalCalculator::IsElementAdvantage(EElementalType AttackerElement, EElementalType DefenderElement)
+bool UElementalCalculator::IsElementAdvantage(EElementalType AttackerElement, EElementalType DefenderElement, const UObject* WorldContextObject)
 {
-	// 如果任一元素为None，则无克制关系
+	// 尝试从配置管理器获取
+	if (UElementalConfigManager* ConfigManager = UElementalConfigManager::GetInstance(WorldContextObject))
+	{
+		return ConfigManager->IsElementAdvantage(AttackerElement, DefenderElement);
+	}
+
+	// 如果无法获取配置管理器，使用默认硬编码逻辑
 	if (AttackerElement == EElementalType::None || DefenderElement == EElementalType::None)
 	{
 		return false;
@@ -28,16 +35,23 @@ bool UElementalCalculator::IsElementAdvantage(EElementalType AttackerElement, EE
 	}
 }
 
-float UElementalCalculator::CalculateCounterMultiplier(EElementalType AttackerElement, EElementalType DefenderElement)
+float UElementalCalculator::CalculateCounterMultiplier(EElementalType AttackerElement, EElementalType DefenderElement, const UObject* WorldContextObject)
 {
+	// 尝试从配置管理器获取
+	if (UElementalConfigManager* ConfigManager = UElementalConfigManager::GetInstance(WorldContextObject))
+	{
+		return ConfigManager->GetCounterMultiplier(AttackerElement, DefenderElement);
+	}
+
+	// 如果无法获取配置管理器，使用默认逻辑
 	// 检查克制关系
-	if (IsElementAdvantage(AttackerElement, DefenderElement))
+	if (IsElementAdvantage(AttackerElement, DefenderElement, WorldContextObject))
 	{
 		return ADVANTAGE_MULTIPLIER; // 1.5倍伤害
 	}
 	
 	// 检查被克制关系
-	if (IsElementAdvantage(DefenderElement, AttackerElement))
+	if (IsElementAdvantage(DefenderElement, AttackerElement, WorldContextObject))
 	{
 		return DISADVANTAGE_MULTIPLIER; // 0.5倍伤害
 	}
@@ -46,13 +60,13 @@ float UElementalCalculator::CalculateCounterMultiplier(EElementalType AttackerEl
 	return NEUTRAL_MULTIPLIER; // 1.0倍伤害
 }
 
-float UElementalCalculator::CalculateElementalDamageModifier(EElementalType AttackElement, EElementalType DefenseElement)
+float UElementalCalculator::CalculateElementalDamageModifier(EElementalType AttackElement, EElementalType DefenseElement, const UObject* WorldContextObject)
 {
 	// 与CalculateCounterMultiplier功能相同，提供不同命名以便理解
-	return CalculateCounterMultiplier(AttackElement, DefenseElement);
+	return CalculateCounterMultiplier(AttackElement, DefenseElement, WorldContextObject);
 }
 
-float UElementalCalculator::CalculateFinalDamage(float BaseDamage, EElementalType AttackerElement, EElementalType DefenderElement)
+float UElementalCalculator::CalculateFinalDamage(float BaseDamage, EElementalType AttackerElement, EElementalType DefenderElement, const UObject* WorldContextObject)
 {
 	// 防止负数伤害
 	if (BaseDamage < 0.0f)
@@ -60,7 +74,7 @@ float UElementalCalculator::CalculateFinalDamage(float BaseDamage, EElementalTyp
 		return 0.0f;
 	}
 
-	float Multiplier = CalculateCounterMultiplier(AttackerElement, DefenderElement);
+	float Multiplier = CalculateCounterMultiplier(AttackerElement, DefenderElement, WorldContextObject);
 	float FinalDamage = BaseDamage * Multiplier;
 
 	// 确保最终伤害不为负数

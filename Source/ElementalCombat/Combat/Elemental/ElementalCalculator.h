@@ -9,6 +9,7 @@
 /**
  * 元素计算器
  * 提供五行相克关系判断和伤害修正计算的静态函数库
+ * 现在使用数据驱动方式，从ElementalConfigManager获取配置数据
  */
 UCLASS()
 class ELEMENTALCOMBAT_API UElementalCalculator : public UObject
@@ -18,25 +19,27 @@ class ELEMENTALCOMBAT_API UElementalCalculator : public UObject
 public:
 	/**
 	 * 判断元素克制关系
-	 * 金克木、木克土、土克水、水克火、火克金
+	 * 现在从配置数据中读取，如果没有配置则使用默认五行相克
 	 * 
 	 * @param AttackerElement 攻击者元素
 	 * @param DefenderElement 防御者元素
+	 * @param WorldContextObject 世界上下文对象（用于获取配置管理器）
 	 * @return true如果攻击者克制防御者
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
-	static bool IsElementAdvantage(EElementalType AttackerElement, EElementalType DefenderElement);
+	static bool IsElementAdvantage(EElementalType AttackerElement, EElementalType DefenderElement, const UObject* WorldContextObject = nullptr);
 
 	/**
 	 * 计算元素相克倍率
-	 * 克制：1.5倍，被克制：0.5倍，无关系：1.0倍
+	 * 现在从配置数据中读取倍率，如果没有配置则使用默认值
 	 * 
 	 * @param AttackerElement 攻击者元素
 	 * @param DefenderElement 防御者元素
+	 * @param WorldContextObject 世界上下文对象（用于获取配置管理器）
 	 * @return 伤害倍率
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
-	static float CalculateCounterMultiplier(EElementalType AttackerElement, EElementalType DefenderElement);
+	static float CalculateCounterMultiplier(EElementalType AttackerElement, EElementalType DefenderElement, const UObject* WorldContextObject = nullptr);
 
 	/**
 	 * 计算元素伤害修正值
@@ -47,7 +50,7 @@ public:
 	 * @return 伤害修正倍率
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
-	static float CalculateElementalDamageModifier(EElementalType AttackElement, EElementalType DefenseElement);
+	static float CalculateElementalDamageModifier(EElementalType AttackElement, EElementalType DefenseElement, const UObject* WorldContextObject = nullptr);
 
 	/**
 	 * 计算最终伤害
@@ -59,7 +62,7 @@ public:
 	 * @return 最终伤害值
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
-	static float CalculateFinalDamage(float BaseDamage, EElementalType AttackerElement, EElementalType DefenderElement);
+	static float CalculateFinalDamage(float BaseDamage, EElementalType AttackerElement, EElementalType DefenderElement, const UObject* WorldContextObject = nullptr);
 
 private:
 	// 克制关系倍率常量
