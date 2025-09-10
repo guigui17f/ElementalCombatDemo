@@ -32,14 +32,14 @@ public:
 	 * 切换到指定元素
 	 * @param NewElement 新的元素类型
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental")
 	void SwitchElement(EElementalType NewElement);
 
 	/**
 	 * 获取当前元素
 	 * @return 当前元素类型
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	EElementalType GetCurrentElement() const { return CurrentElement; }
 
 	/**
@@ -47,7 +47,7 @@ public:
 	 * @param Element 元素类型
 	 * @param EffectData 效果数据
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental")
 	void SetElementEffectData(EElementalType Element, const FElementalEffectData& EffectData);
 
 	/**
@@ -56,7 +56,7 @@ public:
 	 * @param OutEffectData 输出的效果数据
 	 * @return true如果找到数据
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	bool GetElementEffectData(EElementalType Element, FElementalEffectData& OutEffectData) const;
 
 	/**
@@ -70,7 +70,7 @@ public:
 	 * 获取当前元素的投掷物类
 	 * @return 投掷物类，如果没有设置返回nullptr
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	UClass* GetCurrentProjectileClass() const;
 
 	/**
@@ -78,21 +78,21 @@ public:
 	 * @param Element 元素类型
 	 * @return true如果有该元素的数据
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	bool HasElementData(EElementalType Element) const;
 
 public:
 	// 元素变更委托
-	UPROPERTY(BlueprintAssignable, Category = "Elemental")
+	UPROPERTY(BlueprintAssignable, Category = "ElementalCombat|Combat|Elemental")
 	FOnElementChanged OnElementChanged;
 
 protected:
 	// 当前元素
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Elemental")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ElementalCombat|Combat|Elemental")
 	EElementalType CurrentElement;
 
 	// 元素效果数据映射
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Elemental")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental")
 	TMap<EElementalType, FElementalEffectData> ElementEffectDataMap;
 
 private:

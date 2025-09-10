@@ -34,53 +34,53 @@ public:
 
 protected:
 	// AI攻击距离配置
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|AI")
 	float MeleeAttackRange = 200.0f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|AI")
 	float RangedAttackRange = 1000.0f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|AI")
 	float PreferredAttackRange = 500.0f;
 
 	// AI使用的投掷物类
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|AI")
 	TSubclassOf<ACombatProjectile> AIProjectileClass;
 
 	// 投掷物发射Socket
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|AI")
 	FName ProjectileSocketName = TEXT("hand_r");
 
 	// 远程攻击动画
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|AI")
 	UAnimMontage* RangedAttackMontage;
 
 public:
 	// 当前攻击类型
-	UPROPERTY(BlueprintReadOnly, Category="ElementalCombat|Combat")
+	UPROPERTY(BlueprintReadOnly, Category="ElementalCombat|AI")
 	EAIAttackType CurrentAttackType = EAIAttackType::None;
 
 protected:
 
 public:
 	// AI攻击决策
-	UFUNCTION(BlueprintCallable, Category="ElementalCombat|Combat")
+	UFUNCTION(BlueprintCallable, Category="ElementalCombat|AI")
 	EAIAttackType DecideAttackType(float DistanceToTarget) const;
 
 	// 检查是否在偏好攻击距离
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|Combat")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|AI")
 	bool IsInPreferredRange(float DistanceToTarget) const;
 
 	// AI发起远程攻击
-	UFUNCTION(BlueprintCallable, Category="ElementalCombat|Combat")
+	UFUNCTION(BlueprintCallable, Category="ElementalCombat|AI")
 	void DoAIRangedAttack();
 
 	// 发射投掷物（由动画通知调用）
-	UFUNCTION(BlueprintCallable, Category="ElementalCombat|Combat")
+	UFUNCTION(BlueprintCallable, Category="ElementalCombat|AI")
 	void LaunchProjectile();
 
 	// 获取目标距离
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|Combat")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|AI")
 	float GetDistanceToTarget() const;
 
 protected:
@@ -88,11 +88,11 @@ protected:
 	void GetProjectileLaunchParams(FVector& OutLocation, FRotator& OutRotation) const;
 
 	// 蓝图事件 - 远程攻击开始
-	UFUNCTION(BlueprintImplementableEvent, Category="ElementalCombat|Combat")
+	UFUNCTION(BlueprintImplementableEvent, Category="ElementalCombat|AI")
 	void OnRangedAttackStarted();
 
 	// 蓝图事件 - 投掷物发射
-	UFUNCTION(BlueprintImplementableEvent, Category="ElementalCombat|Combat")
+	UFUNCTION(BlueprintImplementableEvent, Category="ElementalCombat|AI")
 	void OnProjectileLaunched(ACombatProjectile* Projectile);
 
 	// 初始化

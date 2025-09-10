@@ -24,21 +24,21 @@ public:
 	 * @param WorldContextObject 世界上下文对象
 	 * @return 配置管理器实例，如果获取失败返回nullptr
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Elemental Config")
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental")
 	static UElementalConfigManager* GetInstance(const UObject* WorldContextObject);
 
 	/**
 	 * 设置当前使用的元素数据资产
 	 * @param DataAsset 元素数据资产
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Elemental Config")
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental")
 	void SetElementalDataAsset(UElementalDataAsset* DataAsset);
 
 	/**
 	 * 获取当前使用的元素数据资产
 	 * @return 当前数据资产，可能为nullptr
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental Config")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	UElementalDataAsset* GetElementalDataAsset() const { return CurrentDataAsset; }
 
 	/**
@@ -47,7 +47,7 @@ public:
 	 * @param DefenderElement 防御者元素
 	 * @return true如果攻击者克制防御者
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental Config")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	bool IsElementAdvantage(EElementalType AttackerElement, EElementalType DefenderElement) const;
 
 	/**
@@ -56,7 +56,7 @@ public:
 	 * @param DefenderElement 防御者元素
 	 * @return 相克倍率，如果没有配置返回默认值
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental Config")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	float GetCounterMultiplier(EElementalType AttackerElement, EElementalType DefenderElement) const;
 
 	/**
@@ -65,14 +65,14 @@ public:
 	 * @param OutRelationship 输出的相克关系
 	 * @return true如果找到关系
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental Config")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	bool GetElementRelationship(EElementalType Element, FElementalRelationship& OutRelationship) const;
 
 	/**
 	 * 检查是否有有效的配置数据
 	 * @return true如果有有效配置
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental Config")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	bool HasValidConfiguration() const;
 
 protected:

@@ -30,7 +30,7 @@ STATETREE_POD_INSTANCEDATA(FStateTreeElementalCombatInstanceData);
 /**
  * StateTree task to perform ranged projectile attack
  */
-USTRUCT(meta=(DisplayName="Ranged Projectile Attack", Category="ElementalCombat"))
+USTRUCT(meta=(DisplayName="Ranged Projectile Attack", Category="ElementalCombat|AI"))
 struct ELEMENTALCOMBAT_API FStateTreeRangedProjectileAttackTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
@@ -86,7 +86,7 @@ STATETREE_POD_INSTANCEDATA(FStateTreeSelectAttackTypeInstanceData);
 /**
  * StateTree task to select attack type based on distance
  */
-USTRUCT(meta=(DisplayName="Select Attack Type", Category="ElementalCombat"))
+USTRUCT(meta=(DisplayName="Select Attack Type", Category="ElementalCombat|AI"))
 struct ELEMENTALCOMBAT_API FStateTreeSelectAttackTypeTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
@@ -147,7 +147,7 @@ STATETREE_POD_INSTANCEDATA(FStateTreeMaintainPreferredRangeInstanceData);
 /**
  * StateTree task to maintain preferred attack range
  */
-USTRUCT(meta=(DisplayName="Maintain Preferred Range", Category="ElementalCombat"))
+USTRUCT(meta=(DisplayName="Maintain Preferred Range", Category="ElementalCombat|AI"))
 struct ELEMENTALCOMBAT_API FStateTreeMaintainPreferredRangeTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()

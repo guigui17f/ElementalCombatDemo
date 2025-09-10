@@ -26,7 +26,7 @@ public:
 	 * @param WorldContextObject 世界上下文对象（用于获取配置管理器）
 	 * @return true如果攻击者克制防御者
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static bool IsElementAdvantage(EElementalType AttackerElement, EElementalType DefenderElement, const UObject* WorldContextObject = nullptr);
 
 	/**
@@ -38,7 +38,7 @@ public:
 	 * @param WorldContextObject 世界上下文对象（用于获取配置管理器）
 	 * @return 伤害倍率
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float CalculateCounterMultiplier(EElementalType AttackerElement, EElementalType DefenderElement, const UObject* WorldContextObject = nullptr);
 
 	/**
@@ -49,7 +49,7 @@ public:
 	 * @param DefenseElement 防御元素
 	 * @return 伤害修正倍率
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float CalculateElementalDamageModifier(EElementalType AttackElement, EElementalType DefenseElement, const UObject* WorldContextObject = nullptr);
 
 	/**
@@ -61,7 +61,7 @@ public:
 	 * @param DefenderElement 防御者元素
 	 * @return 最终伤害值
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float CalculateFinalDamage(float BaseDamage, EElementalType AttackerElement, EElementalType DefenderElement, const UObject* WorldContextObject = nullptr);
 
 private:

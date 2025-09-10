@@ -26,7 +26,7 @@ public:
 	 * @param EffectData 元素效果数据（使用其DamageMultiplier字段）
 	 * @return 应用倍率后的伤害
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|General")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float ApplyDamageMultiplier(float BaseDamage, const FElementalEffectData& EffectData);
 
 	// ===========================================
@@ -39,7 +39,7 @@ public:
 	 * @param WoodData 木元素效果数据
 	 * @return 吸血数值
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|Wood")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float CalculateLifeSteal(float DamageDealt, const FElementalEffectData& WoodData);
 
 	/**
@@ -49,7 +49,7 @@ public:
 	 * @param LifeStealAmount 吸血数值
 	 * @return 恢复后的生命值
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|Wood")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float ApplyLifeSteal(float CurrentHealth, float MaxHealth, float LifeStealAmount);
 
 	// ===========================================
@@ -62,7 +62,7 @@ public:
 	 * @param WaterData 水元素效果数据
 	 * @return 减速后的移动速度
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|Water")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float CalculateSlowedSpeed(float BaseSpeed, const FElementalEffectData& WaterData);
 
 	/**
@@ -71,7 +71,7 @@ public:
 	 * @param WaterData 水元素效果数据
 	 * @return 减速后的攻击速度
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|Water")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float CalculateSlowedAttackSpeed(float BaseAttackSpeed, const FElementalEffectData& WaterData);
 
 	// ===========================================
@@ -83,7 +83,7 @@ public:
 	 * @param FireData 火元素效果数据
 	 * @return tick次数
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|Fire")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static int32 CalculateDotTicks(const FElementalEffectData& FireData);
 
 	/**
@@ -91,7 +91,7 @@ public:
 	 * @param FireData 火元素效果数据
 	 * @return 总DOT伤害
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|Fire")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float CalculateTotalDotDamage(const FElementalEffectData& FireData);
 
 	/**
@@ -99,7 +99,7 @@ public:
 	 * @param FireData 火元素效果数据
 	 * @return 单次DOT伤害
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|Fire")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float GetDotTickDamage(const FElementalEffectData& FireData);
 
 	/**
@@ -109,7 +109,7 @@ public:
 	 * @param DefenderElement 防御者元素
 	 * @return 修正后的DOT伤害
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|Fire")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float CalculateDotTickDamage(const FElementalEffectData& FireData, EElementalType AttackerElement, EElementalType DefenderElement);
 
 	// ===========================================
@@ -122,7 +122,7 @@ public:
 	 * @param EarthData 土元素效果数据
 	 * @return 减免后的伤害
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|Earth")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float ApplyDamageReduction(float IncomingDamage, const FElementalEffectData& EarthData);
 
 	// ===========================================
@@ -137,7 +137,7 @@ public:
 	 * @param AttackerData 攻击者元素效果数据
 	 * @return 最终伤害
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental|General")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float ProcessDamage(float BaseDamage, EElementalType AttackerElement, EElementalType DefenderElement, const FElementalEffectData& AttackerData);
 
 private:

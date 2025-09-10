@@ -24,7 +24,7 @@ public:
 	 * 金克木、木克土、土克水、水克火、火克金
 	 * 克制倍率：1.5倍，被克制倍率：通过反向计算得出0.67倍
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Elemental Config")
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental")
 	void SetupDefaultConfiguration();
 
 	/**
@@ -32,7 +32,7 @@ public:
 	 * @param AdvantageMultiplier 克制时的伤害倍率
 	 * @param DisadvantageMultiplier 被克制时的伤害倍率
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Elemental Config") 
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental") 
 	void SetCustomMultipliers(float AdvantageMultiplier = 1.5f, float DisadvantageMultiplier = 0.67f);
 
 private:

@@ -25,7 +25,7 @@ public:
 	 * @param OutEffectData 输出的效果数据
 	 * @return true如果找到数据
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	bool GetElementEffectData(EElementalType Element, FElementalEffectData& OutEffectData) const;
 
 	/**
@@ -34,7 +34,7 @@ public:
 	 * @param OutRelationship 输出的相克关系
 	 * @return true如果找到关系
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	bool GetElementRelationship(EElementalType Element, FElementalRelationship& OutRelationship) const;
 
 	/**
@@ -56,28 +56,28 @@ public:
 	 * @param Element 元素类型
 	 * @return true如果有配置
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	bool HasElementConfiguration(EElementalType Element) const;
 
 	/**
 	 * 验证数据配置的完整性
 	 * @return 验证结果和错误信息
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental")
 	bool ValidateData(FString& OutErrorMessage) const;
 
 	/**
 	 * 获取所有配置的元素类型
 	 * @return 元素类型数组
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	TArray<EElementalType> GetConfiguredElements() const;
 
 	/**
 	 * 复制元素数据到组件
 	 * @param ElementComponent 目标元素组件
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Elemental")
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental")
 	void CopyDataToComponent(class UElementalComponent* ElementComponent) const;
 
 #if WITH_EDITOR
@@ -87,15 +87,15 @@ public:
 
 protected:
 	// 元素效果数据配置
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Element Effects", meta = (TitleProperty = "Element"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ElementalCombat|Combat|Elemental", meta = (TitleProperty = "Element"))
 	TArray<FElementalEffectData> ElementEffects;
 
 	// 元素相克关系配置
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Element Relationships", meta = (TitleProperty = "Element"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ElementalCombat|Combat|Elemental", meta = (TitleProperty = "Element"))
 	TArray<FElementalRelationship> ElementRelationships;
 
 	// 默认元素效果数据
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Defaults")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ElementalCombat|Combat|Elemental")
 	FElementalEffectData DefaultEffectData;
 
 	// 构建元素映射缓存（派生类可访问）

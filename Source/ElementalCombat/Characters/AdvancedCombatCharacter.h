@@ -27,41 +27,41 @@ public:
 
 protected:
 	// 元素组件
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Elemental")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	UElementalComponent* ElementalComponent;
 
 	// 投掷物配置
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	TSubclassOf<ACombatProjectile> ProjectileClass;
 
 	// 发射位置Socket名称
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	FName ProjectileSocketName = TEXT("hand_r");
 
 	// 蓄力影响曲线
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	UCurveFloat* ChargeSpeedCurve;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	UCurveFloat* ChargeDamageCurve;
 
 	// 蓄力时间记录
 	float ChargeStartTime = 0.0f;
 
 	// 元素切换输入动作
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	UInputAction* SwitchToMetalAction;  // 1键 - 金
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	UInputAction* SwitchToWoodAction;   // 2键 - 木
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	UInputAction* SwitchToWaterAction;  // 3键 - 水
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	UInputAction* SwitchToFireAction;   // 4键 - 火
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	UInputAction* SwitchToEarthAction;  // 5键 - 土
 
 public:
@@ -72,11 +72,11 @@ public:
 	virtual void DoChargedAttackStart() override;
 
 	// 发射投掷物
-	UFUNCTION(BlueprintCallable, Category="ElementalCombat|Combat")
+	UFUNCTION(BlueprintCallable, Category="ElementalCombat|Characters")
 	void LaunchProjectile();
 
 	// 元素切换函数
-	UFUNCTION(BlueprintCallable, Category="Elemental")
+	UFUNCTION(BlueprintCallable, Category="ElementalCombat|Characters")
 	void SwitchToElement(EElementalType NewElement);
 
 	// 各元素的快捷切换
@@ -98,6 +98,6 @@ protected:
 	void GetProjectileLaunchParams(FVector& OutLocation, FRotator& OutRotation) const;
 
 	// 蓝图事件 - 投掷物发射时
-	UFUNCTION(BlueprintImplementableEvent, Category="ElementalCombat|Combat")
+	UFUNCTION(BlueprintImplementableEvent, Category="ElementalCombat|Characters")
 	void OnProjectileLaunched(ACombatProjectile* Projectile);
 };

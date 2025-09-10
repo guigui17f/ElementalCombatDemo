@@ -15,19 +15,19 @@ class ELEMENTALCOMBAT_API AReusableEnemySpawner : public ACombatEnemySpawner
 
 protected:
 	/** 是否允许重新激活 */
-	UPROPERTY(EditAnywhere, Category="Enemy Spawner")
+	UPROPERTY(EditAnywhere, Category="ElementalCombat|AI")
 	bool bCanBeReactivated = true;
 
 	/** 重新激活次数限制（-1表示无限制） */
-	UPROPERTY(EditAnywhere, Category="Enemy Spawner", meta = (ClampMin = -1, ClampMax = 100))
+	UPROPERTY(EditAnywhere, Category="ElementalCombat|AI", meta = (ClampMin = -1, ClampMax = 100))
 	int32 MaxReactivations = -1;
 
 	/** 保存初始生成数量，用于重置 */
-	UPROPERTY(VisibleAnywhere, Category="Enemy Spawner")
+	UPROPERTY(VisibleAnywhere, Category="ElementalCombat|AI")
 	int32 OriginalSpawnCount = 1;
 	
 	/** 当前已重新激活次数 */
-	UPROPERTY(VisibleAnywhere, Category="Enemy Spawner")
+	UPROPERTY(VisibleAnywhere, Category="ElementalCombat|AI")
 	int32 CurrentReactivations = 0;
 
 public:
@@ -35,11 +35,11 @@ public:
 	AReusableEnemySpawner();
 
 	/** 重置生成器状态，准备重新激活 */
-	UFUNCTION(BlueprintCallable, Category="Enemy Spawner")
+	UFUNCTION(BlueprintCallable, Category="ElementalCombat|AI")
 	void ResetSpawner();
 
 	/** 检查是否可以重新激活 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Enemy Spawner")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|AI")
 	bool CanBeReactivated() const;
 
 protected:

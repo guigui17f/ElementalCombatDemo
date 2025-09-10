@@ -47,36 +47,36 @@ struct ELEMENTALCOMBAT_API FElementalEffectData
 	}
 
 	// 金元素 - 伤害倍率
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Metal Element", meta = (ClampMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental", meta = (ClampMin = "0.0"))
 	float DamageMultiplier;
 
 	// 木元素 - 吸血比例
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wood Element", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float LifeStealPercentage;
 
 	// 水元素 - 减速比例和持续时间
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water Element", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float SlowPercentage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water Element", meta = (ClampMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental", meta = (ClampMin = "0.0"))
 	float SlowDuration;
 
 	// 火元素 - DOT伤害
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fire Element", meta = (ClampMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental", meta = (ClampMin = "0.0"))
 	float DotDamage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fire Element", meta = (ClampMin = "0.1"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental", meta = (ClampMin = "0.1"))
 	float DotTickInterval;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fire Element", meta = (ClampMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental", meta = (ClampMin = "0.0"))
 	float DotDuration;
 
 	// 土元素 - 减伤比例
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Earth Element", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float DamageReduction;
 
 	// 投掷物类
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental")
 	UClass* ProjectileClass;
 };
 
@@ -96,11 +96,11 @@ struct ELEMENTALCOMBAT_API FElementalCounterData
 	}
 
 	// 被克制的元素
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Counter")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental")
 	EElementalType CounteredElement;
 
 	// 克制效果倍率
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Counter", meta = (ClampMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental", meta = (ClampMin = "0.0"))
 	float EffectMultiplier;
 };
 
@@ -119,10 +119,10 @@ struct ELEMENTALCOMBAT_API FElementalRelationship
 	}
 
 	// 当前元素
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Element")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental")
 	EElementalType Element;
 
 	// 克制关系列表
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Counters")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental")
 	TArray<FElementalCounterData> Counters;
 };
