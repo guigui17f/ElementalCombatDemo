@@ -1,0 +1,69 @@
+// Copyright 2025 guigui17f. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "ElementalTypes.h"
+#include "ElementalCalculator.generated.h"
+
+/**
+ * 元素计算器
+ * 提供五行相克关系判断和伤害修正计算的静态函数库
+ */
+UCLASS()
+class ELEMENTALCOMBAT_API UElementalCalculator : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	/**
+	 * 判断元素克制关系
+	 * 金克木、木克土、土克水、水克火、火克金
+	 * 
+	 * @param AttackerElement 攻击者元素
+	 * @param DefenderElement 防御者元素
+	 * @return true如果攻击者克制防御者
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	static bool IsElementAdvantage(EElementalType AttackerElement, EElementalType DefenderElement);
+
+	/**
+	 * 计算元素相克倍率
+	 * 克制：1.5倍，被克制：0.5倍，无关系：1.0倍
+	 * 
+	 * @param AttackerElement 攻击者元素
+	 * @param DefenderElement 防御者元素
+	 * @return 伤害倍率
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	static float CalculateCounterMultiplier(EElementalType AttackerElement, EElementalType DefenderElement);
+
+	/**
+	 * 计算元素伤害修正值
+	 * 等同于CalculateCounterMultiplier，提供不同的函数名以便理解
+	 * 
+	 * @param AttackElement 攻击元素
+	 * @param DefenseElement 防御元素
+	 * @return 伤害修正倍率
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	static float CalculateElementalDamageModifier(EElementalType AttackElement, EElementalType DefenseElement);
+
+	/**
+	 * 计算最终伤害
+	 * 基础伤害 * 元素修正倍率，确保结果不为负数
+	 * 
+	 * @param BaseDamage 基础伤害
+	 * @param AttackerElement 攻击者元素
+	 * @param DefenderElement 防御者元素
+	 * @return 最终伤害值
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Elemental")
+	static float CalculateFinalDamage(float BaseDamage, EElementalType AttackerElement, EElementalType DefenderElement);
+
+private:
+	// 克制关系倍率常量
+	static constexpr float ADVANTAGE_MULTIPLIER = 1.5f;
+	static constexpr float DISADVANTAGE_MULTIPLIER = 0.5f;
+	static constexpr float NEUTRAL_MULTIPLIER = 1.0f;
+};
