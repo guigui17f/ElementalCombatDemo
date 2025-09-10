@@ -1,15 +1,20 @@
 // Copyright 2025 guigui17f. All Rights Reserved.
 
 #include "AdvancedCombatCharacter.h"
-#include "Projectiles/CombatProjectile.h"
+#include "Combat/Projectiles/CombatProjectile.h"
+#include "Combat/Elemental/ElementalComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
 #include "Curves/CurveFloat.h"
+#include "EnhancedInputComponent.h"
 
 AAdvancedCombatCharacter::AAdvancedCombatCharacter()
 {
 	// 默认配置
 	ProjectileSocketName = TEXT("hand_r");
+
+	// 创建元素组件
+	ElementalComponent = CreateDefaultSubobject<UElementalComponent>(TEXT("ElementalComponent"));
 }
 
 void AAdvancedCombatCharacter::DoChargedAttackStart()
@@ -32,10 +37,27 @@ void AAdvancedCombatCharacter::DoChargedAttackEnd()
 
 void AAdvancedCombatCharacter::LaunchProjectile()
 {
-	// 检查是否有投掷物类
-	if (!ProjectileClass)
+	if (!ElementalComponent)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ProjectileClass not set for %s"), *GetName());
+		UE_LOG(LogTemp, Warning, TEXT("ElementalComponent not found on %s"), *GetName());
+		return;
+	}
+
+	// 获取当前元素
+	EElementalType CurrentElement = ElementalComponent->GetCurrentElement();
+	
+	// 尝试获取元素特定的投掷物类
+	UClass* ElementProjectileClass = ElementalComponent->GetCurrentProjectileClass();
+	if (!ElementProjectileClass)
+	{
+		// 如果没有元素特定的投掷物，使用默认的
+		ElementProjectileClass = ProjectileClass;
+	}
+
+	// 检查是否有投掷物类
+	if (!ElementProjectileClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No ProjectileClass available for %s"), *GetName());
 		return;
 	}
 
@@ -55,7 +77,7 @@ void AAdvancedCombatCharacter::LaunchProjectile()
 
 	// 生成投掷物
 	ACombatProjectile* Projectile = GetWorld()->SpawnActor<ACombatProjectile>(
-		ProjectileClass, 
+		ElementProjectileClass, 
 		SpawnLocation, 
 		SpawnRotation, 
 		SpawnParams
@@ -88,15 +110,108 @@ void AAdvancedCombatCharacter::LaunchProjectile()
 			DamageMultiplier = GetChargeMultiplier(ChargeTime);
 		}
 
+		// 获取当前元素的效果数据并应用到伤害倍率
+		const FElementalEffectData* ElementData = ElementalComponent->GetElementEffectDataPtr(CurrentElement);
+		if (ElementData)
+		{
+			// 应用元素的伤害倍率（金元素效果）
+			DamageMultiplier *= ElementData->DamageMultiplier;
+		}
+
 		// 应用倍率到投掷物
 		Projectile->SetProjectileProperties(SpeedMultiplier, DamageMultiplier);
 
 		// 触发蓝图事件
 		OnProjectileLaunched(Projectile);
+
+		// 输出调试信息
+		FString ElementName;
+		switch (CurrentElement)
+		{
+		case EElementalType::Metal: ElementName = TEXT("金"); break;
+		case EElementalType::Wood: ElementName = TEXT("木"); break;
+		case EElementalType::Water: ElementName = TEXT("水"); break;
+		case EElementalType::Fire: ElementName = TEXT("火"); break;
+		case EElementalType::Earth: ElementName = TEXT("土"); break;
+		default: ElementName = TEXT("无"); break;
+		}
+		
+		UE_LOG(LogTemp, Log, TEXT("%s 发射了 %s 元素投掷物，伤害倍率: %.2f"), 
+			*GetName(), *ElementName, DamageMultiplier);
 	}
 
 	// 重置蓄力时间
 	ChargeStartTime = 0.0f;
+}
+
+void AAdvancedCombatCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	// 调用父类实现
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	// 绑定元素切换输入
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		// 元素切换 - 1-5键
+		if (SwitchToMetalAction)
+		{
+			EnhancedInputComponent->BindAction(SwitchToMetalAction, ETriggerEvent::Started, this, &AAdvancedCombatCharacter::SwitchToMetal);
+		}
+		if (SwitchToWoodAction)
+		{
+			EnhancedInputComponent->BindAction(SwitchToWoodAction, ETriggerEvent::Started, this, &AAdvancedCombatCharacter::SwitchToWood);
+		}
+		if (SwitchToWaterAction)
+		{
+			EnhancedInputComponent->BindAction(SwitchToWaterAction, ETriggerEvent::Started, this, &AAdvancedCombatCharacter::SwitchToWater);
+		}
+		if (SwitchToFireAction)
+		{
+			EnhancedInputComponent->BindAction(SwitchToFireAction, ETriggerEvent::Started, this, &AAdvancedCombatCharacter::SwitchToFire);
+		}
+		if (SwitchToEarthAction)
+		{
+			EnhancedInputComponent->BindAction(SwitchToEarthAction, ETriggerEvent::Started, this, &AAdvancedCombatCharacter::SwitchToEarth);
+		}
+	}
+}
+
+void AAdvancedCombatCharacter::SwitchToElement(EElementalType NewElement)
+{
+	if (!ElementalComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ElementalComponent not found on %s"), *GetName());
+		return;
+	}
+
+	// 切换元素
+	ElementalComponent->SwitchElement(NewElement);
+
+	// 输出调试信息
+	FString ElementName;
+	switch (NewElement)
+	{
+	case EElementalType::Metal:
+		ElementName = TEXT("金");
+		break;
+	case EElementalType::Wood:
+		ElementName = TEXT("木");
+		break;
+	case EElementalType::Water:
+		ElementName = TEXT("水");
+		break;
+	case EElementalType::Fire:
+		ElementName = TEXT("火");
+		break;
+	case EElementalType::Earth:
+		ElementName = TEXT("土");
+		break;
+	default:
+		ElementName = TEXT("无");
+		break;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("%s 切换到 %s 元素"), *GetName(), *ElementName);
 }
 
 float AAdvancedCombatCharacter::GetChargeMultiplier(float ChargeTime) const

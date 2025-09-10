@@ -5,9 +5,12 @@
 #include "CoreMinimal.h"
 #include "Variant_Combat/CombatCharacter.h"
 #include "Combat/Projectiles/CombatProjectile.h"
+#include "Combat/Elemental/ElementalTypes.h"
 #include "AdvancedCombatCharacter.generated.h"
 
 class UCurveFloat;
+class UElementalComponent;
+class UInputAction;
 
 /**
  * 高级战斗角色类
@@ -23,6 +26,10 @@ public:
 	AAdvancedCombatCharacter();
 
 protected:
+	// 元素组件
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Elemental")
+	UElementalComponent* ElementalComponent;
+
 	// 投掷物配置
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat")
 	TSubclassOf<ACombatProjectile> ProjectileClass;
@@ -41,6 +48,22 @@ protected:
 	// 蓄力时间记录
 	float ChargeStartTime = 0.0f;
 
+	// 元素切换输入动作
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* SwitchToMetalAction;  // 1键 - 金
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* SwitchToWoodAction;   // 2键 - 木
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* SwitchToWaterAction;  // 3键 - 水
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* SwitchToFireAction;   // 4键 - 火
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* SwitchToEarthAction;  // 5键 - 土
+
 public:
 	// 重写蓄力攻击结束，改为发射投掷物
 	virtual void DoChargedAttackEnd() override;
@@ -51,6 +74,20 @@ public:
 	// 发射投掷物
 	UFUNCTION(BlueprintCallable, Category="ElementalCombat|Combat")
 	void LaunchProjectile();
+
+	// 元素切换函数
+	UFUNCTION(BlueprintCallable, Category="Elemental")
+	void SwitchToElement(EElementalType NewElement);
+
+	// 各元素的快捷切换
+	void SwitchToMetal() { SwitchToElement(EElementalType::Metal); }
+	void SwitchToWood() { SwitchToElement(EElementalType::Wood); }
+	void SwitchToWater() { SwitchToElement(EElementalType::Water); }
+	void SwitchToFire() { SwitchToElement(EElementalType::Fire); }
+	void SwitchToEarth() { SwitchToElement(EElementalType::Earth); }
+
+	// 重写输入绑定
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
 
