@@ -3,6 +3,10 @@
 #include "Combat/Elemental/ElementalDataAsset.h"
 #include "Combat/Elemental/ElementalComponent.h"
 
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
+
 UElementalDataAsset::UElementalDataAsset()
 {
 	bCacheBuilt = false;
@@ -225,14 +229,14 @@ void UElementalDataAsset::BuildElementMaps()
 }
 
 #if WITH_EDITOR
-EDataValidationResult UElementalDataAsset::IsDataValid(TArray<FText>& ValidationErrors)
+EDataValidationResult UElementalDataAsset::IsDataValid(FDataValidationContext& Context) const
 {
-	EDataValidationResult Result = Super::IsDataValid(ValidationErrors);
+	EDataValidationResult Result = Super::IsDataValid(Context);
 
 	FString ErrorMessage;
-	if (!ValidateData(ErrorMessage))
+	if (!const_cast<UElementalDataAsset*>(this)->ValidateData(ErrorMessage))
 	{
-		ValidationErrors.Add(FText::FromString(ErrorMessage));
+		Context.AddError(FText::FromString(ErrorMessage));
 		Result = EDataValidationResult::Invalid;
 	}
 

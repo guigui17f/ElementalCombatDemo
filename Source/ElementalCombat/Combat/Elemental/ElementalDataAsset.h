@@ -82,7 +82,7 @@ public:
 
 #if WITH_EDITOR
 	// 编辑器中验证数据
-	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 #endif
 
 protected:
