@@ -16,6 +16,8 @@ public class ElementalCombatTests : ModuleRules
 				"CoreUObject", 
 				"Engine",
 				"UnrealEd",
+				"AIModule",
+				"StateTreeModule",
 				"ElementalCombat"  // 依赖主游戏模块
 			});
 			

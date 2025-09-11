@@ -17,6 +17,7 @@ public class ElementalCombat : ModuleRules
 			"AIModule",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
+			"NavigationSystem",
 			"UMG",
 			"Slate",
 			"Niagara",
