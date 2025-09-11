@@ -7,6 +7,7 @@
 #include "Engine/World.h"
 #include "Curves/CurveFloat.h"
 #include "EnhancedInputComponent.h"
+#include "Variant_Combat/UI/CombatLifeBar.h"
 
 AAdvancedCombatCharacter::AAdvancedCombatCharacter()
 {
@@ -236,6 +237,45 @@ float AAdvancedCombatCharacter::GetChargeMultiplier(float ChargeTime) const
 	{
 		return 2.0f;
 	}
+}
+
+float AAdvancedCombatCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, 
+                                          AController* EventInstigator, AActor* DamageCauser)
+{
+	// 只处理活着的角色
+	if (CurrentHP <= 0.0f)
+	{
+		return 0.0f;
+	}
+
+	// 减少当前HP
+	CurrentHP -= Damage;
+
+	// HP耗尽？
+	if (CurrentHP <= 0.0f)
+	{
+		// 死亡（保留ragdoll）
+		HandleDeath();
+	}
+	else
+	{
+		// 更新生命条
+		if (LifeBarWidget)
+		{
+			LifeBarWidget->SetLifePercentage(CurrentHP / MaxHP);
+		}
+		
+		// 不启用ragdoll物理
+		// 震屏效果应该在蓝图的ReceivedDamage事件中处理
+	}
+
+	return Damage;
+}
+
+void AAdvancedCombatCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+	// 不需要重置ragdoll，因为我们没有启用它
 }
 
 void AAdvancedCombatCharacter::GetProjectileLaunchParams(FVector& OutLocation, FRotator& OutRotation) const

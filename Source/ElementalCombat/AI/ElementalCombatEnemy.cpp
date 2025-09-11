@@ -5,6 +5,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/World.h"
+#include "Variant_Combat/UI/CombatLifeBar.h"
 
 AElementalCombatEnemy::AElementalCombatEnemy()
 {
@@ -186,6 +187,38 @@ float AElementalCombatEnemy::GetDistanceToTarget() const
 	// If no player found, return max distance
 	UE_LOG(LogTemp, Warning, TEXT("%s: No target available for distance calculation"), *GetName());
 	return TNumericLimits<float>::Max();
+}
+
+float AElementalCombatEnemy::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, 
+                                       AController* EventInstigator, AActor* DamageCauser)
+{
+	// 只处理活着的角色
+	if (CurrentHP <= 0.0f)
+	{
+		return 0.0f;
+	}
+
+	// 减少当前HP
+	CurrentHP -= Damage;
+
+	// HP耗尽？
+	if (CurrentHP <= 0.0f)
+	{
+		// 死亡（保留ragdoll）
+		HandleDeath();
+	}
+	else
+	{
+		// 更新生命条
+		if (LifeBarWidget)
+		{
+			LifeBarWidget->SetLifePercentage(CurrentHP / MaxHP);
+		}
+		
+		// 不启用ragdoll物理
+	}
+
+	return Damage;
 }
 
 void AElementalCombatEnemy::GetProjectileLaunchParams(FVector& OutLocation, FRotator& OutRotation) const

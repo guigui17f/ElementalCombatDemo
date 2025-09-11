@@ -7,6 +7,7 @@
 #include "ElementalCombatEnemy.generated.h"
 
 class ACombatProjectile;
+class UCombatLifeBar;
 
 /**
  * 攻击类型枚举
@@ -60,8 +61,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="ElementalCombat|AI")
 	EAIAttackType CurrentAttackType = EAIAttackType::None;
 
-protected:
-
 public:
 	// AI攻击决策
 	UFUNCTION(BlueprintCallable, Category="ElementalCombat|AI")
@@ -82,6 +81,10 @@ public:
 	// 获取目标距离
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|AI")
 	float GetDistanceToTarget() const;
+
+	// 重写受击方法，移除ragdoll效果
+	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, 
+	                        AController* EventInstigator, AActor* DamageCauser) override;
 
 protected:
 	// 获取发射参数

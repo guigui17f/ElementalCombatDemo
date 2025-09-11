@@ -11,6 +11,7 @@
 class UCurveFloat;
 class UElementalComponent;
 class UInputAction;
+class UCombatLifeBar;
 
 /**
  * 高级战斗角色类
@@ -87,7 +88,12 @@ public:
 	void SwitchToEarth() { SwitchToElement(EElementalType::Earth); }
 
 	// 重写输入绑定
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
+	// 重写受击方法，移除ragdoll效果
+	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, 
+	                        AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void Landed(const FHitResult& Hit) override;
 
 protected:
 
