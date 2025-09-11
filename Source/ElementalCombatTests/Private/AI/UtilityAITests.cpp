@@ -212,15 +212,15 @@ bool FUtilityScorerComponentTest::RunTest(const FString& Parameters)
     Context.CurrentTime = TestWorld->GetTimeSeconds();
 
     // Act - 计算评分
-    FUtilityScore Score = ScorerComponent->CalculateUtilityScore(Context);
+    FUtilityScore Score = IUtilityScorer::Execute_CalculateUtilityScore(ScorerComponent, Context);
 
     // Assert - 验证结果
     TestTrue(TEXT("Component score is valid"), Score.bIsValid);
-    TestEqual(TEXT("Component scorer name"), ScorerComponent->GetScorerName(), TEXT("DefaultScorer"));
+    TestEqual(TEXT("Component scorer name"), IUtilityScorer::Execute_GetScorerName(ScorerComponent), TEXT("DefaultScorer"));
 
     // 测试缓存功能
     float FirstCalculationTime = Score.CalculationTime;
-    FUtilityScore CachedScore = ScorerComponent->CalculateUtilityScore(Context);
+    FUtilityScore CachedScore = IUtilityScorer::Execute_CalculateUtilityScore(ScorerComponent, Context);
     
     // 由于缓存，第二次调用应该返回相同的结果
     TestEqual(TEXT("Cached score is same"), CachedScore.FinalScore, Score.FinalScore);

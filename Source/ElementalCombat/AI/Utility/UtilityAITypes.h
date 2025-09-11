@@ -77,13 +77,41 @@ struct ELEMENTALCOMBAT_API FUtilityContext
     }
 
     /** 从上下文获取指定类型的评分输入值 */
-    float GetInputValue(EConsiderationType Type) const;
+    float GetInputValue(EConsiderationType Type) const
+    {
+        switch (Type)
+        {
+        case EConsiderationType::Health:
+            return HealthPercent;
+        case EConsiderationType::Distance:
+            return FMath::Clamp(DistanceToTarget / 1000.0f, 0.0f, 1.0f); // 标准化到1000单位
+        case EConsiderationType::ElementAdvantage:
+            return FMath::Clamp((ElementAdvantage + 1.0f) / 2.0f, 0.0f, 1.0f); // [-1,1] 转 [0,1]
+        case EConsiderationType::ThreatLevel:
+            return ThreatLevel;
+        case EConsiderationType::Cooldown:
+            return GetCustomValue(TEXT("CooldownPercent"), 1.0f);
+        case EConsiderationType::TeamStatus:
+            return GetCustomValue(TEXT("TeamStatusPercent"), 0.5f);
+        case EConsiderationType::Custom:
+            return 0.0f; // 需要通过GetCustomValue单独获取
+        default:
+            return 0.0f;
+        }
+    }
 
     /** 设置自定义值 */
-    void SetCustomValue(const FString& Key, float Value);
+    void SetCustomValue(const FString& Key, float Value)
+    {
+        CustomValues.Add(Key, Value);
+    }
 
     /** 获取自定义值 */
-    float GetCustomValue(const FString& Key, float DefaultValue = 0.0f) const;
+    float GetCustomValue(const FString& Key, float DefaultValue = 0.0f) const
+    {
+        const float* Value = CustomValues.Find(Key);
+        return Value ? *Value : DefaultValue;
+    }
 };
 
 /**

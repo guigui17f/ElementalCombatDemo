@@ -5,42 +5,7 @@
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 
-// FUtilityContext 实现
-float FUtilityContext::GetInputValue(EConsiderationType Type) const
-{
-    switch (Type)
-    {
-    case EConsiderationType::Health:
-        return HealthPercent;
-    case EConsiderationType::Distance:
-        return FMath::Clamp(DistanceToTarget / 1000.0f, 0.0f, 1.0f); // 假设最大有效距离为1000单位
-    case EConsiderationType::ElementAdvantage:
-        return FMath::Clamp((ElementAdvantage + 1.0f) * 0.5f, 0.0f, 1.0f); // 转换[-1,1]到[0,1]
-    case EConsiderationType::ThreatLevel:
-        return ThreatLevel;
-    case EConsiderationType::Cooldown:
-        // 这里可以扩展为具体的技能冷却时间
-        return GetCustomValue(TEXT("CooldownPercent"), 1.0f);
-    case EConsiderationType::TeamStatus:
-        return GetCustomValue(TEXT("TeamStatusPercent"), 0.5f);
-    case EConsiderationType::Custom:
-        // 需要配合CustomKey使用
-        return 0.0f;
-    default:
-        return 0.0f;
-    }
-}
-
-void FUtilityContext::SetCustomValue(const FString& Key, float Value)
-{
-    CustomValues.Add(Key, Value);
-}
-
-float FUtilityContext::GetCustomValue(const FString& Key, float DefaultValue) const
-{
-    const float* Found = CustomValues.Find(Key);
-    return Found ? *Found : DefaultValue;
-}
+// FUtilityContext implementations are now in the header file
 
 // FUtilityConsideration 实现
 float FUtilityConsideration::CalculateScore(const FUtilityContext& Context) const
