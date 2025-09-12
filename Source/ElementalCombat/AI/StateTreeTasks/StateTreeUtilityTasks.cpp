@@ -19,7 +19,7 @@ EStateTreeRunStatus FStateTreeUniversalUtilityTask::EnterState(FStateTreeExecuti
     if (bEnableDebugOutput)
     {
         LogDebug(FString::Printf(TEXT("UniversalUtilityTask: Starting evaluation with profile '%s'"), 
-                                *InstanceData.ScoringProfile.ProfileName));
+                                *InstanceData.ProfileRowName.ToString()));
     }
 
     // 初始化评分计算
@@ -81,11 +81,28 @@ bool FStateTreeUniversalUtilityTask::UpdateScore(FStateTreeExecutionContext& Con
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 
+    // 从DataTable获取配置
+    if (!InstanceData.ProfileDataTable)
+    {
+        UE_LOG(LogTemp, Error, TEXT("UniversalUtilityTask: ProfileDataTable is null"));
+        return false;
+    }
+    
+    FUtilityProfileTableRow* ProfileRow = InstanceData.ProfileDataTable->FindRow<FUtilityProfileTableRow>(
+        InstanceData.ProfileRowName, TEXT("UniversalUtilityTask"));
+    
+    if (!ProfileRow)
+    {
+        UE_LOG(LogTemp, Error, TEXT("UniversalUtilityTask: Profile '%s' not found in DataTable"), 
+               *InstanceData.ProfileRowName.ToString());
+        return false;
+    }
+
     // 创建评分上下文
     FUtilityContext UtilityContext = CreateUtilityContext(Context);
 
-    // 计算评分（使用缓存）
-    FUtilityScore NewScore = CalculateUtilityScoreWithCache(InstanceData.ScoringProfile, UtilityContext);
+    // 使用从DataTable获取的配置计算评分
+    FUtilityScore NewScore = CalculateUtilityScoreWithCache(ProfileRow->Profile, UtilityContext);
 
     // 更新实例数据
     InstanceData.CalculatedScore = NewScore;
@@ -121,9 +138,15 @@ bool FStateTreeUniversalUtilityTask::ShouldUpdate(const FInstanceDataType& Insta
 FText FStateTreeUniversalUtilityTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
 {
     const FInstanceDataType* InstanceData = InstanceDataView.GetPtr<FInstanceDataType>();
-    if (InstanceData)
+    if (InstanceData && InstanceData->ProfileDataTable && InstanceData->ProfileRowName != NAME_None)
     {
-        return FText::FromString(FString::Printf(TEXT("Universal Utility: %s"), *InstanceData->ScoringProfile.ProfileName));
+        FUtilityProfileTableRow* ProfileRow = InstanceData->ProfileDataTable->FindRow<FUtilityProfileTableRow>(
+            InstanceData->ProfileRowName, TEXT("GetDescription"));
+        if (ProfileRow && !ProfileRow->Description.IsEmpty())
+        {
+            return FText::FromString(ProfileRow->Description);
+        }
+        return FText::FromString(FString::Printf(TEXT("Universal Utility: %s"), *InstanceData->ProfileRowName.ToString()));
     }
     return NSLOCTEXT("StateTreeEditor", "UniversalUtility", "Universal Utility Scorer");
 }

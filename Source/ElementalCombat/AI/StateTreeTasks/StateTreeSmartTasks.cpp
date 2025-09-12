@@ -73,18 +73,50 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
     
+    // 验证DataTable引用
+    if (!InstanceData.AttackProfilesTable)
+    {
+        LogDebug(TEXT("SmartAttackTask: AttackProfilesTable is null"));
+        InstanceData.ErrorMessage = TEXT("No AttackProfilesTable found");
+        return false;
+    }
+    
     // 清除之前的评分
     InstanceData.AttackTypeScores.Empty();
     
     // 创建评分上下文
     FUtilityContext UtilityContext = CreateUtilityContext(Context);
     
-    // 评估近战攻击
-    FUtilityScore MeleeScore = CalculateUtilityScoreWithCache(InstanceData.MeleeAttackProfile, UtilityContext);
+    // 从DataTable获取近战配置并评估
+    FUtilityScore MeleeScore;
+    FUtilityProfileTableRow* MeleeProfileRow = InstanceData.AttackProfilesTable->FindRow<FUtilityProfileTableRow>(
+        InstanceData.MeleeProfileRowName, TEXT("SmartAttackTask_Melee"));
+    
+    if (MeleeProfileRow)
+    {
+        MeleeScore = CalculateUtilityScoreWithCache(MeleeProfileRow->Profile, UtilityContext);
+    }
+    else
+    {
+        LogDebug(FString::Printf(TEXT("SmartAttackTask: Melee profile '%s' not found"), 
+                                *InstanceData.MeleeProfileRowName.ToString()));
+    }
     InstanceData.AttackTypeScores.Add(EAIAttackType::Melee, MeleeScore.FinalScore);
     
-    // 评估远程攻击
-    FUtilityScore RangedScore = CalculateUtilityScoreWithCache(InstanceData.RangedAttackProfile, UtilityContext);
+    // 从DataTable获取远程配置并评估
+    FUtilityScore RangedScore;
+    FUtilityProfileTableRow* RangedProfileRow = InstanceData.AttackProfilesTable->FindRow<FUtilityProfileTableRow>(
+        InstanceData.RangedProfileRowName, TEXT("SmartAttackTask_Ranged"));
+    
+    if (RangedProfileRow)
+    {
+        RangedScore = CalculateUtilityScoreWithCache(RangedProfileRow->Profile, UtilityContext);
+    }
+    else
+    {
+        LogDebug(FString::Printf(TEXT("SmartAttackTask: Ranged profile '%s' not found"), 
+                                *InstanceData.RangedProfileRowName.ToString()));
+    }
     InstanceData.AttackTypeScores.Add(EAIAttackType::Ranged, RangedScore.FinalScore);
     
     // 选择最佳攻击类型

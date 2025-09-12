@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "ElementalStateTreeTaskBase.h"
 #include "AI/Utility/UtilityAITypes.h"
+#include "Engine/DataTable.h"
 #include "StateTreeUtilityTasks.generated.h"
 
 class AElementalCombatEnemy;
@@ -17,9 +18,13 @@ struct FStateTreeUniversalUtilityInstanceData : public FElementalStateTreeInstan
 {
     GENERATED_BODY()
 
-    /** Utility评分配置文件 */
+    /** Utility配置数据表 */
     UPROPERTY(EditAnywhere, Category = "Utility Scoring")
-    FUtilityProfile ScoringProfile;
+    UDataTable* ProfileDataTable;
+    
+    /** 选择的配置行名称 */
+    UPROPERTY(EditAnywhere, Category = "Utility Scoring")
+    FName ProfileRowName;
 
     /** 最终评分结果（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")

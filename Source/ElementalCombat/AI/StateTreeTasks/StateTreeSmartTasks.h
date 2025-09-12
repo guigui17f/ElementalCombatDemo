@@ -9,6 +9,7 @@
 #include "Combat/Elemental/ElementalTypes.h"
 #include "AI/ElementalCombatEnemy.h"
 #include "AITypes.h"
+#include "Engine/DataTable.h"
 #include "StateTreeSmartTasks.generated.h"
 
 class AElementalCombatEnemy;
@@ -21,13 +22,17 @@ struct FStateTreeSmartAttackInstanceData : public FElementalStateTreeInstanceDat
 {
     GENERATED_BODY()
 
-    /** 近战攻击评分配置 */
+    /** 攻击配置数据表 */
     UPROPERTY(EditAnywhere, Category = "Attack Scoring")
-    FUtilityProfile MeleeAttackProfile;
-
-    /** 远程攻击评分配置 */
+    UDataTable* AttackProfilesTable;
+    
+    /** 近战配置行名称 */
     UPROPERTY(EditAnywhere, Category = "Attack Scoring")
-    FUtilityProfile RangedAttackProfile;
+    FName MeleeProfileRowName;
+    
+    /** 远程配置行名称 */
+    UPROPERTY(EditAnywhere, Category = "Attack Scoring")
+    FName RangedProfileRowName;
 
     // 技能攻击功能已移除，因为EAIAttackType中没有Skill类型
 
