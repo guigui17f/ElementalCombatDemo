@@ -42,7 +42,7 @@ struct FStateTreeSmartAttackInstanceData : public FElementalStateTreeInstanceDat
 
     /** 最佳攻击评分（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
-    FUtilityScore BestAttackScore;
+    float FinalScore = 0.0f;
 
     /** 攻击决策原因（输出，调试用） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
@@ -137,7 +137,7 @@ struct FStateTreeTacticalPositionInstanceData : public FElementalStateTreeInstan
 
     /** 位置选择评分（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
-    FUtilityScore PositionScore;
+    float FinalScore = 0.0f;
 
     /** 是否正在移动（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
@@ -332,7 +332,7 @@ struct FStateTreeMasterDecisionInstanceData : public FElementalStateTreeInstance
 
     /** 综合决策评分（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
-    FUtilityScore MasterDecisionScore;
+    float FinalScore = 0.0f;
 
     /** 当前执行的主要行动（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")

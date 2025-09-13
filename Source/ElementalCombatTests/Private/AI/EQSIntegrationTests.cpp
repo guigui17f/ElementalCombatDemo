@@ -168,8 +168,8 @@ bool FEQSUtilityTaskTest::RunTest(const FString& Parameters)
 
     // 模拟评估结果
     InstanceData.BestScoredPosition = FVector(400, 300, 0);
-    InstanceData.BestPositionScore.FinalScore = 0.75f;
-    InstanceData.BestPositionScore.bIsValid = true;
+    InstanceData.FinalScore = 0.75f;
+    // Score already set above, no need to set validity separately
     InstanceData.EvaluatedPositions.Add(FVector(400, 300, 0), 0.75f);
     InstanceData.EvaluatedPositions.Add(FVector(350, 250, 0), 0.65f);
     InstanceData.EvaluatedPositions.Add(FVector(450, 350, 0), 0.55f);
@@ -177,14 +177,14 @@ bool FEQSUtilityTaskTest::RunTest(const FString& Parameters)
 
     TestEqual(TEXT("Best scored position should be set"), 
               InstanceData.BestScoredPosition, FVector(400, 300, 0));
-    TestEqual(TEXT("Best position score should be 0.75"), InstanceData.BestPositionScore.FinalScore, 0.75f);
-    TestTrue(TEXT("Best position score should be valid"), InstanceData.BestPositionScore.bIsValid);
+    TestEqual(TEXT("Best position score should be 0.75"), InstanceData.FinalScore, 0.75f);
+    TestTrue(TEXT("Best position score should be valid"), InstanceData.FinalScore > 0.01f);
     TestEqual(TEXT("Should have 3 evaluated positions"), InstanceData.EvaluatedPositions.Num(), 3);
     TestTrue(TEXT("Should have found valid position"), InstanceData.bFoundValidPosition);
 
     // 验证最佳位置评分高于阈值
     TestTrue(TEXT("Best score should be above threshold"), 
-             InstanceData.BestPositionScore.FinalScore >= InstanceData.MinAcceptableScore);
+             InstanceData.FinalScore >= InstanceData.MinAcceptableScore);
 
     return true;
 }

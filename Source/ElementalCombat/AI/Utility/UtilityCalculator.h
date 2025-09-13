@@ -23,7 +23,7 @@ public:
      * @return 计算出的评分结果
      */
     UFUNCTION(BlueprintCallable, Category = "Utility AI", CallInEditor)
-    static FUtilityScore CalculateUtilityScore(const FUtilityProfile& Profile, const FUtilityContext& Context);
+    static float CalculateUtilityScore(const FUtilityProfile& Profile, const FUtilityContext& Context);
 
     /**
      * 计算单项评分

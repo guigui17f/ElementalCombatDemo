@@ -68,15 +68,12 @@ float FUtilityConsideration::ProcessOutputValue(float RawOutput) const
 }
 
 // FUtilityProfile 实现
-FUtilityScore FUtilityProfile::CalculateScore(const FUtilityContext& Context) const
+float FUtilityProfile::CalculateScore(const FUtilityContext& Context, TMap<EConsiderationType, float>* OutConsiderationScores, bool* bOutIsValid) const
 {
-    FUtilityScore Result;
-    Result.CalculationTime = Context.CurrentTime;
-
     if (Considerations.Num() == 0)
     {
-        Result.bIsValid = false;
-        return Result;
+        if (bOutIsValid) *bOutIsValid = false;
+        return 0.0f;
     }
 
     TArray<float> Scores;
@@ -94,7 +91,10 @@ FUtilityScore FUtilityProfile::CalculateScore(const FUtilityContext& Context) co
         WeightArray.Add(Weight);
 
         // 记录详细评分用于调试
-        Result.ConsiderationScores.Add(Consideration.ConsiderationType, Score);
+        if (OutConsiderationScores)
+        {
+            OutConsiderationScores->Add(Consideration.ConsiderationType, Score);
+        }
 
         // 调试输出
         if (bEnableDebugOutput)
@@ -106,18 +106,19 @@ FUtilityScore FUtilityProfile::CalculateScore(const FUtilityContext& Context) co
     }
 
     // 组合评分
-    Result.FinalScore = CombineScores(Scores, WeightArray);
+    float FinalScore = CombineScores(Scores, WeightArray);
 
     // 检查是否达到最小阈值
-    Result.bIsValid = Result.FinalScore >= MinScoreThreshold;
+    bool bIsValid = FinalScore >= MinScoreThreshold;
+    if (bOutIsValid) *bOutIsValid = bIsValid;
 
     if (bEnableDebugOutput)
     {
         UE_LOG(LogTemp, Log, TEXT("UtilityProfile[%s]: Final Score = %.3f (Valid: %s)"), 
-               *ProfileName, Result.FinalScore, Result.bIsValid ? TEXT("Yes") : TEXT("No"));
+               *ProfileName, FinalScore, bIsValid ? TEXT("Yes") : TEXT("No"));
     }
 
-    return Result;
+    return FinalScore;
 }
 
 float FUtilityProfile::CombineScores(const TArray<float>& Scores, const TArray<float>& WeightArray) const
@@ -180,7 +181,7 @@ float FUtilityProfile::CombineScores(const TArray<float>& Scores, const TArray<f
 
 // === UUtilityCalculator 静态函数实现 ===
 
-FUtilityScore UUtilityCalculator::CalculateUtilityScore(const FUtilityProfile& Profile, const FUtilityContext& Context)
+float UUtilityCalculator::CalculateUtilityScore(const FUtilityProfile& Profile, const FUtilityContext& Context)
 {
     return Profile.CalculateScore(Context);
 }

@@ -104,7 +104,7 @@ private:
     mutable TMap<int32, FEQSQueryCache> EQSCache;
 
     /** Utility评分缓存 */
-    mutable TMap<int32, FUtilityScore> UtilityCache;
+    mutable TMap<int32, float> UtilityCache;
 
     /** Utility评分缓存时间戳 */
     mutable TMap<int32, float> UtilityCacheTimestamps;
@@ -116,13 +116,13 @@ protected:
     FUtilityContext CreateUtilityContext(const FStateTreeExecutionContext& Context) const;
 
     /** 使用缓存计算Utility评分 */
-    FUtilityScore CalculateUtilityScoreWithCache(const FUtilityProfile& Profile, const FUtilityContext& UtilityContext) const;
+    float CalculateUtilityScoreWithCache(const FUtilityProfile& Profile, const FUtilityContext& UtilityContext) const;
 
     /** 计算Utility评分（不使用缓存） */
-    FUtilityScore CalculateUtilityScoreDirect(const FUtilityProfile& Profile, const FUtilityContext& UtilityContext) const;
+    float CalculateUtilityScoreDirect(const FUtilityProfile& Profile, const FUtilityContext& UtilityContext) const;
 
     /** 比较两个Utility评分，返回更好的那个 */
-    FUtilityScore GetBetterUtilityScore(const FUtilityScore& ScoreA, const FUtilityScore& ScoreB) const;
+    float GetBetterUtilityScore(const float& ScoreA, const float& ScoreB) const;
 
     // === EQS查询辅助函数 ===
 

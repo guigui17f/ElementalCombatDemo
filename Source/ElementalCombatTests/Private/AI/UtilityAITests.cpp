@@ -124,22 +124,22 @@ bool FUtilityProfileTest::RunTest(const FString& Parameters)
     Context.DistanceToTarget = 200.0f; // 距离输入为0.2
 
     // Act - 计算评分
-    FUtilityScore Score = Profile.CalculateScore(Context);
+    float Score = Profile.CalculateScore(Context);
 
     // Assert - 验证结果
-    TestTrue(TEXT("Score is valid"), Score.bIsValid);
-    TestTrue(TEXT("Score is above threshold"), Score.FinalScore >= Profile.MinScoreThreshold);
+    TestTrue(TEXT("Score is valid"), Score > 0.01f);
+    TestTrue(TEXT("Score is above threshold"), Score >= Profile.MinScoreThreshold);
 
     // 验证加权平均计算
     // 预期: (0.8 * 1.0 + 0.8 * 2.0) / (1.0 + 2.0) = 2.4 / 3.0 = 0.8
     float ExpectedScore = (0.8f * 1.0f + 0.8f * 2.0f) / (1.0f + 2.0f);
-    TestNearlyEqual(TEXT("Weighted average score"), Score.FinalScore, ExpectedScore, 0.01f);
+    TestNearlyEqual(TEXT("Weighted average score"), Score, ExpectedScore, 0.01f);
 
     // 测试乘法组合
     Profile.bUseMultiplicativeCombination = true;
     Score = Profile.CalculateScore(Context);
-    TestTrue(TEXT("Multiplicative score is valid"), Score.bIsValid);
-    TestTrue(TEXT("Multiplicative score is positive"), Score.FinalScore > 0.0f);
+    TestTrue(TEXT("Multiplicative score is valid"), Score > 0.01f);
+    TestTrue(TEXT("Multiplicative score is positive"), Score > 0.0f);
 
     return true;
 }
@@ -212,18 +212,18 @@ bool FUtilityScorerComponentTest::RunTest(const FString& Parameters)
     Context.CurrentTime = TestWorld->GetTimeSeconds();
 
     // Act - 计算评分
-    FUtilityScore Score = IUtilityScorer::Execute_CalculateUtilityScore(ScorerComponent, Context);
+    float Score = IUtilityScorer::Execute_CalculateUtilityScore(ScorerComponent, Context);
 
     // Assert - 验证结果
-    TestTrue(TEXT("Component score is valid"), Score.bIsValid);
+    TestTrue(TEXT("Component score is valid"), Score > 0.01f);
     TestEqual(TEXT("Component scorer name"), IUtilityScorer::Execute_GetScorerName(ScorerComponent), TEXT("DefaultScorer"));
 
     // 测试缓存功能
-    float FirstCalculationTime = Score.CalculationTime;
-    FUtilityScore CachedScore = IUtilityScorer::Execute_CalculateUtilityScore(ScorerComponent, Context);
+    float FirstCalculationTime = 0.0f;
+    float CachedScore = IUtilityScorer::Execute_CalculateUtilityScore(ScorerComponent, Context);
     
     // 由于缓存，第二次调用应该返回相同的结果
-    TestEqual(TEXT("Cached score is same"), CachedScore.FinalScore, Score.FinalScore);
+    TestEqual(TEXT("Cached score is same"), CachedScore, Score);
 
     // 清理
     TestWorld->DestroyWorld(false);
@@ -245,8 +245,8 @@ bool FUtilityBoundaryTest::RunTest(const FString& Parameters)
     FUtilityContext Context;
     Context.HealthPercent = 0.5f;
     
-    FUtilityScore Score = EmptyProfile.CalculateScore(Context);
-    TestFalse(TEXT("Empty profile should be invalid"), Score.bIsValid);
+    float Score = EmptyProfile.CalculateScore(Context);
+    TestFalse(TEXT("Empty profile should be invalid"), Score > 0.01f);
 
     // 测试极值输入
     FUtilityConsideration Consideration;
@@ -267,7 +267,7 @@ bool FUtilityBoundaryTest::RunTest(const FString& Parameters)
     
     Context.HealthPercent = 1.0f;
     Score = ZeroWeightProfile.CalculateScore(Context);
-    TestEqual(TEXT("Zero weight should result in zero score"), Score.FinalScore, 0.0f);
+    TestEqual(TEXT("Zero weight should result in zero score"), Score, 0.0f);
 
     return true;
 }
@@ -306,7 +306,7 @@ bool FUtilityPerformanceTest::RunTest(const FString& Parameters)
 
     for (int32 i = 0; i < IterationCount; ++i)
     {
-        FUtilityScore Score = ComplexProfile.CalculateScore(Context);
+        float Score = ComplexProfile.CalculateScore(Context);
         // 防止编译器优化掉循环
         Context.HealthPercent += 0.00001f;
     }
@@ -345,7 +345,7 @@ bool FUtilityThreadSafetyTest::RunTest(const FString& Parameters)
     // 模拟多个线程同时计算评分
     constexpr int32 ThreadCount = 4;
     constexpr int32 CalculationsPerThread = 100;
-    TArray<FUtilityScore> Results;
+    TArray<float> Results;
     Results.SetNum(ThreadCount * CalculationsPerThread);
 
     // 使用简单的并行for循环模拟多线程访问
@@ -358,9 +358,9 @@ bool FUtilityThreadSafetyTest::RunTest(const FString& Parameters)
 
     // 验证所有结果都有效
     int32 ValidResults = 0;
-    for (const FUtilityScore& Result : Results)
+    for (const float& Result : Results)
     {
-        if (Result.bIsValid)
+        if (Result > 0.01f)
         {
             ValidResults++;
         }

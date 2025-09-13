@@ -22,7 +22,7 @@ struct FStateTreeUniversalUtilityInstanceData : public FElementalStateTreeInstan
 
     /** 最终评分结果（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
-    FUtilityScore CalculatedScore;
+    float FinalScore = 0.0f;    /** 评分是否有效（输出） */    UPROPERTY(EditAnywhere, Category = "Output")    bool bScoreValid = false;    /** 各项评分细节（输出，调试用） */    UPROPERTY(EditAnywhere, Category = "Output")    float HealthScore = 0.0f;    UPROPERTY(EditAnywhere, Category = "Output")    float DistanceScore = 0.0f;    UPROPERTY(EditAnywhere, Category = "Output")    float ElementScore = 0.0f;    UPROPERTY(EditAnywhere, Category = "Output")    float ThreatScore = 0.0f;    UPROPERTY(EditAnywhere, Category = "Output")    float CooldownScore = 0.0f;    UPROPERTY(EditAnywhere, Category = "Output")    float TeamScore = 0.0f;
 
     /** 是否重新计算评分（每次进入状态时） */
     UPROPERTY(EditAnywhere, Category = "Utility Scoring")
@@ -146,15 +146,15 @@ struct FStateTreeUtilityComparisonInstanceData : public FElementalStateTreeInsta
 
     /** 评分A的结果（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
-    FUtilityScore ScoreA;
+    float ScoreA = 0.0f;
 
     /** 评分B的结果（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
-    FUtilityScore ScoreB;
+    float ScoreB = 0.0f;
 
     /** 更好的评分结果（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
-    FUtilityScore BetterScore;
+    float FinalScore = 0.0f;
 
     /** 更好的配置名称（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
@@ -214,7 +214,7 @@ struct FStateTreeDynamicUtilityInstanceData : public FElementalStateTreeInstance
 
     /** 调整后的评分结果（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
-    FUtilityScore AdjustedScore;
+    float FinalScore = 0.0f;    /** 基础评分（调整前，输出） */    UPROPERTY(EditAnywhere, Category = "Output")    float BaseScore = 0.0f;    /** 评分是否有效（输出） */    UPROPERTY(EditAnywhere, Category = "Output")    bool bScoreValid = false;
 
     /** 当前应用的权重（输出，调试用） */
     UPROPERTY(VisibleAnywhere, Category = "Output")

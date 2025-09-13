@@ -167,59 +167,6 @@ private:
 };
 
 /**
- * Utility综合评分结果
- * 包含最终分数和调试信息
- */
-USTRUCT(BlueprintType)
-struct ELEMENTALCOMBAT_API FUtilityScore
-{
-    GENERATED_BODY()
-
-    /** 最终综合分数 [0.0 - 1.0] */
-    UPROPERTY(BlueprintReadOnly, Category = "Score")
-    float FinalScore = 0.0f;
-
-    /** 各项评分的详细结果（用于调试） */
-    UPROPERTY(BlueprintReadOnly, Category = "Score")
-    TMap<EConsiderationType, float> ConsiderationScores;
-
-    /** 评分计算时间戳 */
-    UPROPERTY(BlueprintReadOnly, Category = "Score")
-    float CalculationTime = 0.0f;
-
-    /** 是否是有效的评分结果 */
-    UPROPERTY(BlueprintReadOnly, Category = "Score")
-    bool bIsValid = false;
-
-    FUtilityScore()
-    {
-        Reset();
-    }
-
-    /** 重置评分结果 */
-    void Reset()
-    {
-        FinalScore = 0.0f;
-        ConsiderationScores.Empty();
-        CalculationTime = 0.0f;
-        bIsValid = false;
-    }
-
-    /** 检查是否优于另一个评分 */
-    bool IsBetterThan(const FUtilityScore& Other) const
-    {
-        return bIsValid && FinalScore > Other.FinalScore;
-    }
-
-    /** 获取指定类型的单项评分 */
-    float GetConsiderationScore(EConsiderationType Type) const
-    {
-        const float* Score = ConsiderationScores.Find(Type);
-        return Score ? *Score : 0.0f;
-    }
-};
-
-/**
  * Utility评分配置文件
  * 定义一组评分因素及其权重
  */
@@ -262,7 +209,7 @@ struct ELEMENTALCOMBAT_API FUtilityProfile
     }
 
     /** 根据此配置文件计算综合评分 */
-    FUtilityScore CalculateScore(const FUtilityContext& Context) const;
+    float CalculateScore(const FUtilityContext& Context, TMap<EConsiderationType, float>* OutConsiderationScores = nullptr, bool* bOutIsValid = nullptr) const;
 
     /** 获取指定类型的权重 */
     float GetWeight(EConsiderationType Type) const

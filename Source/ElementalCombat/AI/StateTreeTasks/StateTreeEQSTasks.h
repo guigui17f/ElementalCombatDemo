@@ -229,7 +229,7 @@ struct FStateTreeEQSUtilityInstanceData : public FElementalStateTreeInstanceData
 
     /** 最佳位置的评分（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
-    FUtilityScore BestPositionScore;
+    float FinalScore = 0.0f;
 
     /** 评估的位置及其评分（输出，调试用） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
@@ -265,7 +265,7 @@ struct ELEMENTALCOMBAT_API FStateTreeEQSUtilityTask : public FElementalStateTree
 
 protected:
     /** 使用Utility评分评估位置 */
-    FUtilityScore EvaluatePosition(const FVector& Position, const FUtilityContext& BaseContext, 
+    float EvaluatePosition(const FVector& Position, const FUtilityContext& BaseContext, 
                                   const FUtilityProfile& ScoringProfile) const;
 
     /** 处理EQS查询结果并进行Utility评分 */

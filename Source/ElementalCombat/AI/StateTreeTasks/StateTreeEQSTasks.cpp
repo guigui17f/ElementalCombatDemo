@@ -264,29 +264,29 @@ bool FStateTreeEQSUtilityTask::ProcessEQSResults(const TArray<FVector>& Location
     FUtilityContext BaseContext = CreateUtilityContext(Context);
     
     InstanceData.EvaluatedPositions.Empty();
-    FUtilityScore BestScore;
+    float BestScore = 0.0f;
     FVector BestPosition = FVector::ZeroVector;
     
     for (const FVector& Location : Locations)
     {
-        FUtilityScore PositionScore = EvaluatePosition(Location, BaseContext, InstanceData.PositionScoringProfile);
-        InstanceData.EvaluatedPositions.Add(Location, PositionScore.FinalScore);
+        float PositionScore = EvaluatePosition(Location, BaseContext, InstanceData.PositionScoringProfile);
+        InstanceData.EvaluatedPositions.Add(Location, PositionScore);
         
-        if (PositionScore.FinalScore > BestScore.FinalScore && PositionScore.FinalScore >= InstanceData.MinAcceptableScore)
+        if (PositionScore > BestScore && PositionScore >= InstanceData.MinAcceptableScore)
         {
             BestScore = PositionScore;
             BestPosition = Location;
         }
     }
     
-    InstanceData.BestPositionScore = BestScore;
+    InstanceData.FinalScore = BestScore;
     InstanceData.BestScoredPosition = BestPosition;
-    InstanceData.bFoundValidPosition = BestScore.FinalScore >= InstanceData.MinAcceptableScore;
+    InstanceData.bFoundValidPosition = BestScore >= InstanceData.MinAcceptableScore;
     
     return InstanceData.bFoundValidPosition;
 }
 
-FUtilityScore FStateTreeEQSUtilityTask::EvaluatePosition(const FVector& Position, const FUtilityContext& BaseContext, const FUtilityProfile& ScoringProfile) const
+float FStateTreeEQSUtilityTask::EvaluatePosition(const FVector& Position, const FUtilityContext& BaseContext, const FUtilityProfile& ScoringProfile) const
 {
     // Create context for this specific position
     FUtilityContext PositionContext = BaseContext;

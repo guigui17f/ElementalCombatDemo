@@ -12,7 +12,7 @@ UUtilityScorerComponent::UUtilityScorerComponent()
     ScorerName = TEXT("DefaultScorer");
 }
 
-FUtilityScore UUtilityScorerComponent::CalculateUtilityScore_Implementation(const FUtilityContext& Context)
+float UUtilityScorerComponent::CalculateUtilityScore_Implementation(const FUtilityContext& Context)
 {
     // 使用缓存系统
     if (bUseCaching)
@@ -21,7 +21,7 @@ FUtilityScore UUtilityScorerComponent::CalculateUtilityScore_Implementation(cons
                            GetTypeHash(Context.DistanceToTarget) ^ 
                            GetTypeHash(Context.ElementAdvantage);
                            
-        if (LastContextHash == ContextHash && CachedScore.bIsValid)
+        if (LastContextHash == ContextHash && CachedScore > 0.01f)
         {
             return CachedScore;
         }
@@ -50,13 +50,13 @@ void UUtilityScorerComponent::SetScoringProfile(const FUtilityProfile& NewProfil
     ScoringProfile = NewProfile;
     
     // 清除缓存
-    CachedScore.Reset();
+    CachedScore = 0.0f;
     LastContextHash = 0;
 }
 
 void UUtilityScorerComponent::ClearCache()
 {
-    CachedScore.Reset();
+    CachedScore = 0.0f;
     LastContextHash = 0;
     CacheTimestamp = -1.0f;
 }
@@ -69,7 +69,7 @@ bool UUtilityScorerComponent::IsCacheValid(const FUtilityContext& Context) const
     uint32 ContextHash = CalculateContextHash(Context);
     
     return (LastContextHash == ContextHash && 
-            CachedScore.bIsValid && 
+            CachedScore > 0.01f && 
             CacheTimestamp > 0.0f);
 }
 
@@ -81,24 +81,21 @@ uint32 UUtilityScorerComponent::CalculateContextHash(const FUtilityContext& Cont
            GetTypeHash(Context.ThreatLevel);
 }
 
-FUtilityScore UUtilityScorerComponent::CalculateScoreInternal(const FUtilityContext& Context) const
+float UUtilityScorerComponent::CalculateScoreInternal(const FUtilityContext& Context) const
 {
     return UUtilityCalculator::CalculateUtilityScore(ScoringProfile, Context);
 }
 
 FString UUtilityScorerComponent::GetDebugScoreInfo(const FUtilityContext& Context) const
 {
-    FUtilityScore Score = CalculateScoreInternal(Context);
+    float Score = CalculateScoreInternal(Context);
     
     FString DebugInfo = FString::Printf(TEXT("Scorer: %s\nScore: %.3f\nValid: %s\n"), 
-                                       *ScorerName, Score.FinalScore, 
-                                       Score.bIsValid ? TEXT("Yes") : TEXT("No"));
+                                       *ScorerName, Score, 
+                                       Score > 0.01f ? TEXT("Yes") : TEXT("No"));
     
-    for (const auto& Pair : Score.ConsiderationScores)
-    {
-        FString TypeName = UEnum::GetValueAsString(Pair.Key);
-        DebugInfo += FString::Printf(TEXT("%s: %.3f\n"), *TypeName, Pair.Value);
-    }
+    DebugInfo += FString::Printf(TEXT("Health: %.3f\nDistance: %.3f\nElement Advantage: %.3f\n"),
+                                 Context.HealthPercent, Context.DistanceToTarget, Context.ElementAdvantage);
     
     return DebugInfo;
 }
@@ -139,7 +136,7 @@ TScriptInterface<IUtilityScorer> UMultiUtilityScorerComponent::GetScorer(const F
     return FoundScorer ? *FoundScorer : TScriptInterface<IUtilityScorer>();
 }
 
-FUtilityScore UMultiUtilityScorerComponent::CalculateScoreWithScorer(const FString& ScorerName, const FUtilityContext& Context) const
+float UMultiUtilityScorerComponent::CalculateScoreWithScorer(const FString& ScorerName, const FUtilityContext& Context) const
 {
     TScriptInterface<IUtilityScorer> Scorer = GetScorer(ScorerName);
     if (Scorer.GetInterface())
@@ -147,17 +144,17 @@ FUtilityScore UMultiUtilityScorerComponent::CalculateScoreWithScorer(const FStri
         return Scorer.GetInterface()->Execute_CalculateUtilityScore(Scorer.GetObject(), Context);
     }
     
-    return FUtilityScore(); // Invalid score
+    return 0.0f; // Invalid score
 }
 
-FUtilityScore UMultiUtilityScorerComponent::CalculateScore(const FUtilityContext& Context) const
+float UMultiUtilityScorerComponent::CalculateScore(const FUtilityContext& Context) const
 {
     return CalculateScoreWithScorer(DefaultScorerName, Context);
 }
 
-FUtilityScore UMultiUtilityScorerComponent::CalculateBestScore(const FUtilityContext& Context, FString& OutBestScorerName) const
+float UMultiUtilityScorerComponent::CalculateBestScore(const FUtilityContext& Context, FString& OutBestScorerName) const
 {
-    FUtilityScore BestScore;
+    float BestScore = 0.0f;
     OutBestScorerName = TEXT("");
     
     for (const auto& Pair : RegisteredScorers)
@@ -167,9 +164,9 @@ FUtilityScore UMultiUtilityScorerComponent::CalculateBestScore(const FUtilityCon
         
         if (Scorer.GetInterface())
         {
-            FUtilityScore CurrentScore = Scorer.GetInterface()->Execute_CalculateUtilityScore(Scorer.GetObject(), Context);
+            float CurrentScore = Scorer.GetInterface()->Execute_CalculateUtilityScore(Scorer.GetObject(), Context);
             
-            if (CurrentScore.IsBetterThan(BestScore))
+            if (CurrentScore > BestScore)
             {
                 BestScore = CurrentScore;
                 OutBestScorerName = ScorerName;

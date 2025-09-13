@@ -41,7 +41,7 @@ FUtilityContext FElementalStateTreeTaskBase::CreateUtilityContext(const FStateTr
     return UtilityContext;
 }
 
-FUtilityScore FElementalStateTreeTaskBase::CalculateUtilityScoreWithCache(const FUtilityProfile& Profile, const FUtilityContext& UtilityContext) const
+float FElementalStateTreeTaskBase::CalculateUtilityScoreWithCache(const FUtilityProfile& Profile, const FUtilityContext& UtilityContext) const
 {
     if (!bUseUtilityCache)
     {
@@ -51,7 +51,7 @@ FUtilityScore FElementalStateTreeTaskBase::CalculateUtilityScoreWithCache(const 
     int32 ContextHash = CalculateUtilityContextHash(UtilityContext);
 
     // 检查缓存
-    const FUtilityScore* CachedScore = UtilityCache.Find(ContextHash);
+    const float* CachedScore = UtilityCache.Find(ContextHash);
     const float* CachedTimestamp = UtilityCacheTimestamps.Find(ContextHash);
 
     if (CachedScore && CachedTimestamp)
@@ -60,33 +60,33 @@ FUtilityScore FElementalStateTreeTaskBase::CalculateUtilityScoreWithCache(const 
         {
             if (bEnableDebugOutput)
             {
-                LogDebug(FString::Printf(TEXT("Using cached Utility score: %.3f"), CachedScore->FinalScore));
+                LogDebug(FString::Printf(TEXT("Using cached Utility score: %.3f"), *CachedScore));
             }
             return *CachedScore;
         }
     }
 
     // 计算新评分并缓存
-    FUtilityScore NewScore = CalculateUtilityScoreDirect(Profile, UtilityContext);
+    float NewScore = CalculateUtilityScoreDirect(Profile, UtilityContext);
     UtilityCache.Add(ContextHash, NewScore);
     UtilityCacheTimestamps.Add(ContextHash, UtilityContext.CurrentTime);
 
     if (bEnableDebugOutput)
     {
-        LogDebug(FString::Printf(TEXT("Calculated new Utility score: %.3f"), NewScore.FinalScore));
+        LogDebug(FString::Printf(TEXT("Calculated new Utility score: %.3f"), NewScore));
     }
 
     return NewScore;
 }
 
-FUtilityScore FElementalStateTreeTaskBase::CalculateUtilityScoreDirect(const FUtilityProfile& Profile, const FUtilityContext& UtilityContext) const
+float FElementalStateTreeTaskBase::CalculateUtilityScoreDirect(const FUtilityProfile& Profile, const FUtilityContext& UtilityContext) const
 {
     return Profile.CalculateScore(UtilityContext);
 }
 
-FUtilityScore FElementalStateTreeTaskBase::GetBetterUtilityScore(const FUtilityScore& ScoreA, const FUtilityScore& ScoreB) const
+float FElementalStateTreeTaskBase::GetBetterUtilityScore(const float& ScoreA, const float& ScoreB) const
 {
-    return ScoreA.IsBetterThan(ScoreB) ? ScoreA : ScoreB;
+    return FMath::Max(ScoreA, ScoreB);
 }
 
 // === EQS查询辅助函数实现 ===

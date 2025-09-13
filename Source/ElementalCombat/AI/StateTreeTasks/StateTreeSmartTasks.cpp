@@ -95,37 +95,37 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
     // 近战评分 - 距离越近分数越高
     FUtilityContext MeleeContext = UtilityContext;
     MeleeContext.DistanceToTarget = UtilityContext.DistanceToTarget; // 近战偏好近距离
-    FUtilityScore MeleeScore = CalculateUtilityScoreWithCache(AIProfile, MeleeContext);
+    float MeleeScore = CalculateUtilityScoreWithCache(AIProfile, MeleeContext);
     
     // 对近战攻击，如果距离太远则降低分数
     if (UtilityContext.DistanceToTarget > 300.0f) // 近战最佳距离
     {
-        MeleeScore.FinalScore *= 0.5f; // 远距离时近战分数减半
+        MeleeScore *= 0.5f; // 远距离时近战分数减半
     }
-    InstanceData.AttackTypeScores.Add(EAIAttackType::Melee, MeleeScore.FinalScore);
+    InstanceData.AttackTypeScores.Add(EAIAttackType::Melee, MeleeScore);
     
     // 远程评分 - 距离适中分数最高
     FUtilityContext RangedContext = UtilityContext;
     RangedContext.DistanceToTarget = UtilityContext.DistanceToTarget;
-    FUtilityScore RangedScore = CalculateUtilityScoreWithCache(AIProfile, RangedContext);
+    float RangedScore = CalculateUtilityScoreWithCache(AIProfile, RangedContext);
     
     // 对远程攻击，如果距离太近则降低分数
     if (UtilityContext.DistanceToTarget < 200.0f) // 远程最小距离
     {
-        RangedScore.FinalScore *= 0.3f; // 近距离时远程分数大幅降低
+        RangedScore *= 0.3f; // 近距离时远程分数大幅降低
     }
-    InstanceData.AttackTypeScores.Add(EAIAttackType::Ranged, RangedScore.FinalScore);
+    InstanceData.AttackTypeScores.Add(EAIAttackType::Ranged, RangedScore);
     
     // 选择最佳攻击类型
     EAIAttackType BestAttackType = EAIAttackType::None;
-    FUtilityScore BestScore;
+    float BestScore = 0.0f;
     
-    if (MeleeScore.IsBetterThan(RangedScore))
+    if (MeleeScore > RangedScore)
     {
         BestAttackType = EAIAttackType::Melee;
         BestScore = MeleeScore;
     }
-    else if (RangedScore.bIsValid)
+    else if (RangedScore > 0.01f)
     {
         BestAttackType = EAIAttackType::Ranged;
         BestScore = RangedScore;
@@ -133,15 +133,15 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
     
     // 更新实例数据
     InstanceData.SelectedAttackType = BestAttackType;
-    InstanceData.BestAttackScore = BestScore;
-    InstanceData.bShouldAttack = (BestAttackType != EAIAttackType::None && BestScore.bIsValid);
+    InstanceData.FinalScore = BestScore;
+    InstanceData.bShouldAttack = (BestAttackType != EAIAttackType::None && BestScore > 0.01f);
     InstanceData.DecisionReason = GenerateDecisionReason(InstanceData);
     
     if (bEnableDebugOutput)
     {
         FString TypeName = UEnum::GetValueAsString(BestAttackType);
         LogDebug(FString::Printf(TEXT("SmartAttack: Selected %s, Score=%.3f, ShouldAttack=%s"), 
-                                *TypeName, BestScore.FinalScore,
+                                *TypeName, BestScore,
                                 InstanceData.bShouldAttack ? TEXT("Yes") : TEXT("No")));
     }
     
@@ -194,7 +194,7 @@ FString FStateTreeSmartAttackTask::GenerateDecisionReason(const FInstanceDataTyp
     
     FString TypeName = UEnum::GetValueAsString(InstanceData.SelectedAttackType);
     return FString::Printf(TEXT("Selected %s attack (Score: %.2f)"), 
-                          *TypeName, InstanceData.BestAttackScore.FinalScore);
+                          *TypeName, InstanceData.FinalScore);
 }
 
 #if WITH_EDITOR
@@ -294,20 +294,20 @@ bool FStateTreeTacticalPositionTask::EvaluateAndSelectPosition(FStateTreeExecuti
     FUtilityContext UtilityContext = CreateUtilityContext(Context);
     UtilityContext.DistanceToTarget = FVector::Dist(CandidatePosition, TargetPosition);
     
-    FUtilityScore PositionScore = CalculateUtilityScoreWithCache(InstanceData.PositionScoringProfile, UtilityContext);
+    float PositionScore = CalculateUtilityScoreWithCache(InstanceData.PositionScoringProfile, UtilityContext);
     
     // 更新实例数据
     InstanceData.SelectedPosition = CandidatePosition;
-    InstanceData.PositionScore = PositionScore;
+    InstanceData.FinalScore = PositionScore;
     
     if (bEnableDebugOutput)
     {
         LogDebug(FString::Printf(TEXT("TacticalPosition: Selected (%.1f,%.1f,%.1f), Score=%.3f"), 
                                 CandidatePosition.X, CandidatePosition.Y, CandidatePosition.Z,
-                                PositionScore.FinalScore));
+                                PositionScore));
     }
     
-    return PositionScore.bIsValid;
+    return PositionScore > 0.01f;
 }
 
 bool FStateTreeTacticalPositionTask::MoveToSelectedPosition(FStateTreeExecutionContext& Context) const
@@ -444,12 +444,12 @@ bool FStateTreeElementalDecisionTask::EvaluateElementalOptions(FStateTreeExecuti
         EElementalType ElementType = ElementProfilePair.Key;
         const FUtilityProfile& Profile = ElementProfilePair.Value;
         
-        FUtilityScore ElementScore = CalculateUtilityScoreWithCache(Profile, UtilityContext);
-        InstanceData.ElementScores.Add(ElementType, ElementScore.FinalScore);
+        float ElementScore = CalculateUtilityScoreWithCache(Profile, UtilityContext);
+        InstanceData.ElementScores.Add(ElementType, ElementScore);
         
-        if (ElementScore.FinalScore > BestScore)
+        if (ElementScore > BestScore)
         {
-            BestScore = ElementScore.FinalScore;
+            BestScore = ElementScore;
             BestElement = ElementType;
         }
     }

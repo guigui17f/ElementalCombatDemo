@@ -24,7 +24,7 @@ EStateTreeRunStatus FStateTreeUniversalUtilityTask::EnterState(FStateTreeExecuti
     }
 
     // 初始化评分计算
-    if (InstanceData.bRecalculateOnEnter || !InstanceData.CalculatedScore.bIsValid)
+    if (InstanceData.bRecalculateOnEnter || !InstanceData.bScoreValid)
     {
         if (!UpdateScore(Context))
         {
@@ -74,7 +74,7 @@ void FStateTreeUniversalUtilityTask::ExitState(FStateTreeExecutionContext& Conte
     {
         const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
         LogDebug(FString::Printf(TEXT("UniversalUtilityTask: Exiting with final score %.3f"), 
-                                InstanceData.CalculatedScore.FinalScore));
+                                InstanceData.FinalScore));
     }
 }
 
@@ -96,26 +96,23 @@ bool FStateTreeUniversalUtilityTask::UpdateScore(FStateTreeExecutionContext& Con
     FUtilityContext UtilityContext = CreateUtilityContext(Context);
 
     // 使用从AIController获取的配置计算评分
-    FUtilityScore NewScore = CalculateUtilityScoreWithCache(AIProfile, UtilityContext);
+    float NewScore = CalculateUtilityScoreWithCache(AIProfile, UtilityContext);
 
     // 更新实例数据
-    InstanceData.CalculatedScore = NewScore;
-    InstanceData.bTaskCompleted = NewScore.bIsValid;
+    InstanceData.FinalScore = NewScore;
+    InstanceData.bTaskCompleted = NewScore > 0.01f;
 
     if (bEnableDebugOutput)
     {
         LogDebug(FString::Printf(TEXT("UniversalUtilityTask: Updated score to %.3f (Valid: %s)"), 
-                                NewScore.FinalScore, NewScore.bIsValid ? TEXT("Yes") : TEXT("No")));
+                                NewScore, NewScore > 0.01f ? TEXT("Yes") : TEXT("No")));
 
-        // 显示详细评分信息
-        for (const auto& Pair : NewScore.ConsiderationScores)
-        {
-            FString TypeName = UEnum::GetValueAsString(Pair.Key);
-            LogDebug(FString::Printf(TEXT("  %s: %.3f"), *TypeName, Pair.Value));
-        }
+        // 显示上下文信息
+        LogDebug(FString::Printf(TEXT("  Health: %.3f, Distance: %.3f, Element: %.3f"), 
+                                UtilityContext.HealthPercent, UtilityContext.DistanceToTarget, UtilityContext.ElementAdvantage));
     }
 
-    return NewScore.bIsValid;
+    return NewScore > 0.01f;
 }
 
 bool FStateTreeUniversalUtilityTask::ShouldUpdate(const FInstanceDataType& InstanceData, float CurrentTime) const
@@ -206,22 +203,22 @@ EStateTreeRunStatus FStateTreeUtilityComparisonTask::EnterState(FStateTreeExecut
     InstanceData.ScoreB = CalculateUtilityScoreWithCache(InstanceData.ProfileB, UtilityContext);
 
     // 比较评分
-    InstanceData.bIsABetter = InstanceData.ScoreA.IsBetterThan(InstanceData.ScoreB);
-    InstanceData.BetterScore = InstanceData.bIsABetter ? InstanceData.ScoreA : InstanceData.ScoreB;
+    InstanceData.bIsABetter = InstanceData.ScoreA > InstanceData.ScoreB;
+    InstanceData.FinalScore = InstanceData.bIsABetter ? InstanceData.ScoreA : InstanceData.ScoreB;
     InstanceData.BetterProfileName = InstanceData.bIsABetter ? InstanceData.ProfileA.ProfileName : InstanceData.ProfileB.ProfileName;
-    InstanceData.ScoreDifference = FMath::Abs(InstanceData.ScoreA.FinalScore - InstanceData.ScoreB.FinalScore);
+    InstanceData.ScoreDifference = FMath::Abs(InstanceData.ScoreA - InstanceData.ScoreB);
 
-    InstanceData.bTaskCompleted = InstanceData.BetterScore.bIsValid;
+    InstanceData.bTaskCompleted = InstanceData.FinalScore > 0.01f;
 
     if (bEnableDebugOutput)
     {
         LogDebug(FString::Printf(TEXT("UtilityComparison: %s(%.3f) vs %s(%.3f) -> %s wins (diff: %.3f)"), 
-                                *InstanceData.ProfileA.ProfileName, InstanceData.ScoreA.FinalScore,
-                                *InstanceData.ProfileB.ProfileName, InstanceData.ScoreB.FinalScore,
+                                *InstanceData.ProfileA.ProfileName, InstanceData.ScoreA,
+                                *InstanceData.ProfileB.ProfileName, InstanceData.ScoreB,
                                 *InstanceData.BetterProfileName, InstanceData.ScoreDifference));
     }
 
-    return InstanceData.BetterScore.bIsValid ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Failed;
+    return InstanceData.FinalScore > 0.01f ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Failed;
 }
 
 #if WITH_EDITOR
@@ -264,13 +261,13 @@ EStateTreeRunStatus FStateTreeDynamicUtilityTask::EnterState(FStateTreeExecution
         AdjustedProfile.SetWeight(Pair.Key, Pair.Value);
     }
 
-    InstanceData.AdjustedScore = CalculateUtilityScoreWithCache(AdjustedProfile, UtilityContext);
-    InstanceData.bTaskCompleted = InstanceData.AdjustedScore.bIsValid;
+    InstanceData.FinalScore = CalculateUtilityScoreWithCache(AdjustedProfile, UtilityContext);
+    InstanceData.bTaskCompleted = InstanceData.FinalScore > 0.01f;
 
     if (bEnableDebugOutput)
     {
         LogDebug(FString::Printf(TEXT("DynamicUtility[%s]: Adjusted score %.3f"), 
-                                *InstanceData.BaseProfile.ProfileName, InstanceData.AdjustedScore.FinalScore));
+                                *InstanceData.BaseProfile.ProfileName, InstanceData.FinalScore));
         
         for (const auto& Pair : InstanceData.CurrentWeights)
         {
@@ -302,7 +299,7 @@ EStateTreeRunStatus FStateTreeDynamicUtilityTask::Tick(FStateTreeExecutionContex
         AdjustedProfile.SetWeight(Pair.Key, Pair.Value);
     }
 
-    InstanceData.AdjustedScore = CalculateUtilityScoreWithCache(AdjustedProfile, UtilityContext);
+    InstanceData.FinalScore = CalculateUtilityScoreWithCache(AdjustedProfile, UtilityContext);
 
     return EStateTreeRunStatus::Running;
 }

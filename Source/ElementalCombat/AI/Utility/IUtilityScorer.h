@@ -31,7 +31,7 @@ public:
      * @return 综合评分结果
      */
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Utility AI")
-    FUtilityScore CalculateUtilityScore(const FUtilityContext& Context);
+    float CalculateUtilityScore(const FUtilityContext& Context);
 
     /**
      * 获取评分器的名称（用于调试）
@@ -46,7 +46,7 @@ public:
     bool IsScoreValid(const FUtilityContext& Context) const;
 
     // C++原生接口（可选实现）
-    virtual FUtilityScore CalculateUtilityScore_Implementation(const FUtilityContext& Context) { return FUtilityScore(); }
+    virtual float CalculateUtilityScore_Implementation(const FUtilityContext& Context) { return 0.0f; }
     virtual FString GetScorerName_Implementation() const { return TEXT("BaseUtilityScorer"); }
     virtual bool IsScoreValid_Implementation(const FUtilityContext& Context) const { return true; }
 };
@@ -82,7 +82,7 @@ protected:
 
 private:
     /** 缓存的评分结果 */
-    mutable FUtilityScore CachedScore;
+    mutable float CachedScore = 0.0f;    /** 缓存的评分有效性标记 */    mutable bool bCachedScoreValid = false;
 
     /** 缓存时间戳 */
     mutable float CacheTimestamp = -1.0f;
@@ -93,7 +93,7 @@ private:
 public:
     // IUtilityScorer接口实现
     /** 蓝图接口实现 */
-    virtual FUtilityScore CalculateUtilityScore_Implementation(const FUtilityContext& Context) override;
+    virtual float CalculateUtilityScore_Implementation(const FUtilityContext& Context) override;
     virtual FString GetScorerName_Implementation() const override;
     virtual bool IsScoreValid_Implementation(const FUtilityContext& Context) const override;
 
@@ -111,7 +111,7 @@ public:
 
     /** 获取缓存的评分结果（如果有效） */
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Utility AI")
-    FUtilityScore GetCachedScore() const { return CachedScore; }
+    float GetCachedScore() const { return CachedScore; }
 
     /** 检查缓存是否有效 */
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Utility AI")
@@ -122,7 +122,7 @@ protected:
     uint32 CalculateContextHash(const FUtilityContext& Context) const;
 
     /** 执行实际的评分计算（不考虑缓存） */
-    virtual FUtilityScore CalculateScoreInternal(const FUtilityContext& Context) const;
+    virtual float CalculateScoreInternal(const FUtilityContext& Context) const;
 
 public:
     /** 调试：获取详细的评分信息 */
@@ -170,15 +170,15 @@ public:
 
     /** 使用指定评分器计算分数 */
     UFUNCTION(BlueprintCallable, Category = "Utility AI")
-    FUtilityScore CalculateScoreWithScorer(const FString& ScorerName, const FUtilityContext& Context) const;
+    float CalculateScoreWithScorer(const FString& ScorerName, const FUtilityContext& Context) const;
 
     /** 使用默认评分器计算分数 */
     UFUNCTION(BlueprintCallable, Category = "Utility AI")
-    FUtilityScore CalculateScore(const FUtilityContext& Context) const;
+    float CalculateScore(const FUtilityContext& Context) const;
 
     /** 使用所有评分器计算分数并返回最高分 */
     UFUNCTION(BlueprintCallable, Category = "Utility AI")
-    FUtilityScore CalculateBestScore(const FUtilityContext& Context, FString& OutBestScorerName) const;
+    float CalculateBestScore(const FUtilityContext& Context, FString& OutBestScorerName) const;
 
     /** 获取所有注册的评分器名称 */
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Utility AI")
