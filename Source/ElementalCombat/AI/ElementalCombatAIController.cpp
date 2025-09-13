@@ -3,15 +3,27 @@
 #include "ElementalCombatAIController.h"
 #include "ElementalCombatEnemy.h"
 #include "ElementalCombatGameInstance.h"
+#include "Components/StateTreeAIComponent.h"
 
 AElementalCombatAIController::AElementalCombatAIController()
 {
-	// Minimal constructor - all logic handled by StateTree
+	// 父类构造函数会自动调用，创建StateTreeAI组件并设置必要的标志
+	// 子类特有的初始化代码可以在这里添加
 }
 
 void AElementalCombatAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
+
+	// 验证StateTree组件是否正确初始化
+	if (UStateTreeAIComponent* StateTreeComp = FindComponentByClass<UStateTreeAIComponent>())
+	{
+		UE_LOG(LogTemp, Log, TEXT("StateTree组件已正确初始化"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("StateTree组件未找到！"));
+	}
 
 	// Cache reference to the elemental combat enemy
 	ElementalCombatEnemy = Cast<AElementalCombatEnemy>(InPawn);

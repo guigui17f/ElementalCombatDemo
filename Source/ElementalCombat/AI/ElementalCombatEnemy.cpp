@@ -29,33 +29,19 @@ EAIAttackType AElementalCombatEnemy::DecideAttackType(float DistanceToTarget) co
 		return EAIAttackType::None;
 	}
 
-	EAIAttackType AttackType = EAIAttackType::None;
+	// 简单返回当前配置的攻击类型，让StateTree控制决策逻辑
+	UE_LOG(LogTemp, Log, TEXT("%s: Using configured attack type %d (Distance: %.2f)"),
+		   *GetName(), (int32)CurrentAttackType, DistanceToTarget);
 
-	if (DistanceToTarget <= MeleeAttackRange)
-	{
-		AttackType = EAIAttackType::Melee;
-		UE_LOG(LogTemp, Log, TEXT("%s: Selected Melee attack (Distance: %.2f <= %.2f)"), *GetName(), DistanceToTarget, MeleeAttackRange);
-	}
-	else if (DistanceToTarget <= RangedAttackRange)
-	{
-		AttackType = EAIAttackType::Ranged;
-		UE_LOG(LogTemp, Log, TEXT("%s: Selected Ranged attack (Distance: %.2f <= %.2f)"), *GetName(), DistanceToTarget, RangedAttackRange);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("%s: No attack type selected (Distance: %.2f > %.2f)"), *GetName(), DistanceToTarget, RangedAttackRange);
-	}
-
-	return AttackType;
+	return CurrentAttackType;
 }
 
 bool AElementalCombatEnemy::IsInPreferredRange(float DistanceToTarget) const
 {
-	// 在偏好距离的100单位容差范围内
-	bool bInRange = FMath::Abs(DistanceToTarget - PreferredAttackRange) < 100.0f;
-	UE_LOG(LogTemp, Verbose, TEXT("%s: IsInPreferredRange - Distance: %.2f, Preferred: %.2f, InRange: %s"), 
-		   *GetName(), DistanceToTarget, PreferredAttackRange, bInRange ? TEXT("Yes") : TEXT("No"));
-	return bInRange;
+	// 让StateTree的Utility系统完全控制范围判断，这里始终返回true
+	UE_LOG(LogTemp, Verbose, TEXT("%s: IsInPreferredRange - Distance: %.2f (StateTree controls range logic)"),
+		   *GetName(), DistanceToTarget);
+	return true;
 }
 
 void AElementalCombatEnemy::DoAIRangedAttack()

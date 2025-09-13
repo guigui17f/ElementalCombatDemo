@@ -334,14 +334,6 @@ void FStateTreeDynamicUtilityTask::CalculateDynamicWeights(const FUtilityContext
             CurrentWeight *= (1.0f + (1.0f - UtilityContext.HealthPercent));
             break;
 
-        case EConsiderationType::Distance:
-            // 根据距离调整权重
-            if (UtilityContext.DistanceToTarget < 300.0f) // 近距离
-            {
-                CurrentWeight *= 1.5f; // 增加距离考虑的权重
-            }
-            break;
-
         case EConsiderationType::ElementAdvantage:
             // 如果有元素优势，增加权重
             if (UtilityContext.ElementAdvantage > 0.0f)

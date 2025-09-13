@@ -77,21 +77,77 @@ bool FStateTreeEQSQueryTask::StartEQSQuery(FStateTreeExecutionContext& Context) 
         return false;
     }
 
+    // 检查是否有查询模板
+    if (!InstanceData.QueryTemplate)
+    {
+        LogDebug(TEXT("StartEQSQuery: No QueryTemplate specified"));
+        return false;
+    }
+
+    UWorld* World = AIController->GetWorld();
+    if (!World)
+    {
+        LogDebug(TEXT("StartEQSQuery: No World found"));
+        return false;
+    }
+
+    UEnvQueryManager* EQSManager = UEnvQueryManager::GetCurrent(World);
+    if (!EQSManager)
+    {
+        LogDebug(TEXT("StartEQSQuery: No EQS Manager found"));
+        return false;
+    }
+
+    APawn* QueryPawn = AIController->GetPawn();
+    if (!QueryPawn)
+    {
+        LogDebug(TEXT("StartEQSQuery: No Pawn found"));
+        return false;
+    }
+
     InstanceData.QueryStartTime = FPlatformTime::Seconds();
     InstanceData.bIsQueryRunning = true;
-    InstanceData.QueryRequestID = 1; // Simplified ID
-    
-    // In a real implementation, we would use UEnvQueryManager to start the query
-    // For now, we'll simulate a successful query result
-    TArray<FVector> SimulatedResults;
-    if (APawn* Pawn = AIController->GetPawn())
+
+    // 创建并执行EQS查询
+    FEnvQueryRequest QueryRequest(InstanceData.QueryTemplate, QueryPawn);
+
+    // 根据异步设置选择执行方式
+    if (InstanceData.bRunAsync)
     {
-        FVector PawnLocation = Pawn->GetActorLocation();
-        SimulatedResults.Add(PawnLocation + FVector(100, 0, 0));
-        SimulatedResults.Add(PawnLocation + FVector(-100, 0, 0));
+        // 异步查询 - 使用Lambda委托
+        FQueryFinishedSignature QueryFinishedDelegate;
+        QueryFinishedDelegate.BindLambda([this](TSharedPtr<FEnvQueryResult> QueryResult)
+        {
+            OnEQSQueryComplete(QueryResult);
+        });
+
+        InstanceData.QueryRequestID = QueryRequest.Execute(EEnvQueryRunMode::AllMatching, QueryFinishedDelegate);
+
+        if (bEnableDebugOutput)
+        {
+            LogDebug(FString::Printf(TEXT("EQS Async Query started with ID: %d"), InstanceData.QueryRequestID));
+        }
     }
-    
-    ProcessQueryResults(SimulatedResults, InstanceData);
+    else
+    {
+        // 同步查询
+        TSharedPtr<FEnvQueryResult> QueryResult = EQSManager->RunInstantQuery(QueryRequest, EEnvQueryRunMode::AllMatching);
+
+        TArray<FVector> QueryResults;
+        if (QueryResult.IsValid() && QueryResult->IsSuccessful())
+        {
+            QueryResult->GetAllAsLocations(QueryResults);
+        }
+
+        ProcessQueryResults(QueryResults, InstanceData);
+        InstanceData.bIsQueryRunning = false;
+
+        if (bEnableDebugOutput)
+        {
+            LogDebug(FString::Printf(TEXT("EQS Sync Query completed: %d results"), QueryResults.Num()));
+        }
+    }
+
     return true;
 }
 
@@ -117,9 +173,38 @@ void FStateTreeEQSQueryTask::ProcessQueryResults(const TArray<FVector>& Location
     }
 }
 
-void FStateTreeEQSQueryTask::OnEQSQueryComplete(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
+void FStateTreeEQSQueryTask::OnEQSQueryComplete(TSharedPtr<FEnvQueryResult> QueryResult) const
 {
-    // Callback implementation for real EQS queries
+    if (!QueryResult.IsValid())
+    {
+        if (bEnableDebugOutput)
+        {
+            LogDebug(TEXT("OnEQSQueryComplete: QueryResult is invalid"));
+        }
+        return;
+    }
+
+    TArray<FVector> QueryResults;
+
+    if (QueryResult->IsSuccessful())
+    {
+        QueryResult->GetAllAsLocations(QueryResults);
+
+        if (bEnableDebugOutput)
+        {
+            LogDebug(FString::Printf(TEXT("EQS Query completed successfully: %d results"), QueryResults.Num()));
+        }
+    }
+    else
+    {
+        if (bEnableDebugOutput)
+        {
+            LogDebug(TEXT("EQS Query failed"));
+        }
+    }
+
+    // 注意：这里需要访问任务实例数据，在实际实现中可能需要额外的同步机制
+    // ProcessQueryResults(QueryResults, InstanceData);
 }
 
 #if WITH_EDITOR
@@ -151,27 +236,48 @@ EStateTreeRunStatus FStateTreeEQSTacticalQueryTask::EnterState(FStateTreeExecuti
         return EStateTreeRunStatus::Failed;
     }
 
-    // Execute simplified query (in real implementation, would use EQS)
+    // 使用真实的EQS查询执行战术位置查询
     TArray<FVector> CandidatePositions;
-    if (AAIController* AIController = GetAIController(Context))
-    {
-        if (APawn* Pawn = AIController->GetPawn())
-        {
-            FVector PawnLocation = Pawn->GetActorLocation();
-            CandidatePositions.Add(PawnLocation + FVector(200, 0, 0));
-            CandidatePositions.Add(PawnLocation + FVector(-200, 0, 0));
-        }
-    }
+    FVector BestPosition;
 
-    if (CandidatePositions.Num() > 0)
+    if (ExecuteEQSQueryWithCache(SelectedQuery, Context, CandidatePositions, BestPosition))
     {
-        InstanceData.RecommendedPosition = CandidatePositions[0];
+        // 评估所有候选位置的质量
+        float BestQuality = 0.0f;
+        FVector BestTacticalPosition = BestPosition;
+
+        for (const FVector& Position : CandidatePositions)
+        {
+            float PositionQuality = EvaluatePositionQuality(Position, UtilityContext);
+            if (PositionQuality > BestQuality)
+            {
+                BestQuality = PositionQuality;
+                BestTacticalPosition = Position;
+            }
+        }
+
+        InstanceData.RecommendedPosition = BestTacticalPosition;
         InstanceData.AlternativePositions = CandidatePositions;
-        InstanceData.PositionQuality = EvaluatePositionQuality(CandidatePositions[0], UtilityContext);
+        InstanceData.PositionQuality = BestQuality;
+
+        if (bEnableDebugOutput)
+        {
+            LogDebug(FString::Printf(TEXT("TacticalQuery: Found %d positions, best quality: %.3f"),
+                                    CandidatePositions.Num(), BestQuality));
+        }
+
         return EStateTreeRunStatus::Succeeded;
     }
+    else
+    {
+        if (bEnableDebugOutput)
+        {
+            LogDebug(TEXT("TacticalQuery: EQS query failed or returned no results"));
+        }
 
-    return EStateTreeRunStatus::Failed;
+        InstanceData.PositionQuality = 0.0f;
+        return EStateTreeRunStatus::Failed;
+    }
 }
 
 EStateTreeRunStatus FStateTreeEQSTacticalQueryTask::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
@@ -181,15 +287,14 @@ EStateTreeRunStatus FStateTreeEQSTacticalQueryTask::Tick(FStateTreeExecutionCont
 
 EAIAttackType FStateTreeEQSTacticalQueryTask::SelectQueryType(const FUtilityContext& UtilityContext, const FInstanceDataType& InstanceData) const
 {
-    // Simple heuristic: use distance to determine attack type
-    if (UtilityContext.DistanceToTarget < 300.0f)
+    // 让配置决定查询类型，不再硬编码距离判断
+    if (InstanceData.ForcedQueryType != EAIAttackType::None)
     {
-        return EAIAttackType::Melee;
+        return InstanceData.ForcedQueryType;
     }
-    else
-    {
-        return EAIAttackType::Ranged;
-    }
+
+    // 默认返回近战类型，让StateTree和EQS配置控制具体行为
+    return EAIAttackType::Melee;
 }
 
 UEnvQuery* FStateTreeEQSTacticalQueryTask::GetQueryForType(EAIAttackType QueryType, const FInstanceDataType& InstanceData) const
@@ -231,25 +336,47 @@ EStateTreeRunStatus FStateTreeEQSUtilityTask::EnterState(FStateTreeExecutionCont
         return EStateTreeRunStatus::Failed;
     }
 
-    // Execute simplified EQS query
+    // 使用真实的EQS查询
     TArray<FVector> QueryResults;
-    if (AAIController* AIController = GetAIController(Context))
+    FVector BestPosition;
+
+    if (ExecuteEQSQueryWithCache(InstanceData.QueryTemplate, Context, QueryResults, BestPosition))
     {
-        if (APawn* Pawn = AIController->GetPawn())
+        // 限制评估的位置数量以提高性能
+        int32 MaxPositions = FMath::Min(QueryResults.Num(), InstanceData.MaxPositionsToEvaluate);
+        if (MaxPositions < QueryResults.Num())
         {
-            FVector PawnLocation = Pawn->GetActorLocation();
-            for (int32 i = 0; i < InstanceData.MaxPositionsToEvaluate; ++i)
+            // 随机选择位置进行评估，保持第一个（最佳位置）
+            for (int32 i = MaxPositions; i < QueryResults.Num(); ++i)
             {
-                float Angle = (2.0f * PI * i) / InstanceData.MaxPositionsToEvaluate;
-                FVector Position = PawnLocation + FVector(FMath::Cos(Angle) * 300, FMath::Sin(Angle) * 300, 0);
-                QueryResults.Add(Position);
+                int32 SwapIndex = FMath::RandRange(1, i);
+                if (SwapIndex < MaxPositions)
+                {
+                    QueryResults.Swap(SwapIndex, i);
+                }
             }
+            QueryResults.SetNum(MaxPositions);
         }
+
+        if (bEnableDebugOutput)
+        {
+            LogDebug(FString::Printf(TEXT("EQSUtility: Processing %d positions (from %d total)"),
+                                    MaxPositions, QueryResults.Num()));
+        }
+
+        // 处理查询结果并进行Utility评分
+        ProcessEQSResults(QueryResults, Context);
+    }
+    else
+    {
+        if (bEnableDebugOutput)
+        {
+            LogDebug(TEXT("EQSUtility: EQS query failed or returned no results"));
+        }
+
+        InstanceData.bFoundValidPosition = false;
     }
 
-    // Process results with Utility scoring
-    ProcessEQSResults(QueryResults, Context);
-    
     return InstanceData.bFoundValidPosition ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Failed;
 }
 

@@ -66,6 +66,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="ElementalCombat|AI")
 	EAIAttackType DecideAttackType(float DistanceToTarget) const;
 
+	// 检查是否正在攻击
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|Combat")
+	bool IsAttacking() const { return bIsAttacking; }
+
 	// 检查是否在偏好攻击距离
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|AI")
 	bool IsInPreferredRange(float DistanceToTarget) const;

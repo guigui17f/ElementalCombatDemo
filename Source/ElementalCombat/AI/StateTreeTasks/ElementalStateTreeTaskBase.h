@@ -216,7 +216,7 @@ private:
     int32 CalculateUtilityContextHash(const FUtilityContext& Context) const;
 
     /** EQS查询完成回调 */
-    void OnEQSQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
+    void OnEQSQueryCompleted(TSharedPtr<FEnvQueryResult> QueryResult) const;
 };
 
 /**

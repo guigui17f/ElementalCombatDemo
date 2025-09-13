@@ -108,7 +108,7 @@ protected:
     void ProcessQueryResults(const TArray<FVector>& Locations, FInstanceDataType& InstanceData) const;
 
     /** 查询完成回调 */
-    void OnEQSQueryComplete(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
+    void OnEQSQueryComplete(TSharedPtr<FEnvQueryResult> QueryResult) const;
 };
 
 /**

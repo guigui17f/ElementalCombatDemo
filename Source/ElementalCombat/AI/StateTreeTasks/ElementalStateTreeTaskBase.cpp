@@ -114,25 +114,41 @@ void FElementalStateTreeTaskBase::ExecuteEQSQuery(UEnvQuery* QueryTemplate, cons
         return;
     }
 
-    // TODO: 实现完整的EQS集成
-    // 当前为简化版本，返回默认位置
-    int32 QueryHash = CalculateEQSQueryHash(QueryTemplate, Context);
-    FEQSQueryCache& Cache = EQSCache.FindOrAdd(QueryHash);
-    Cache.bIsValid = true;
-    Cache.CachedLocations.Empty();
-    Cache.CachedLocations.Add(Controller->GetPawn()->GetActorLocation() + FVector(100, 0, 0)); // 简单的位置偏移
-    Cache.CacheTimestamp = World->GetTimeSeconds();
-    Cache.BestLocation = Cache.CachedLocations[0];
-    
-    if (bEnableDebugOutput)
+    // 获取环境查询管理器
+    UEnvQueryManager* EQSManager = UEnvQueryManager::GetCurrent(World);
+    if (!EQSManager)
     {
-        LogDebug(FString::Printf(TEXT("EQS Query simplified - using default location: %s"), 
-                                *Cache.BestLocation.ToString()));
+        LogDebug(TEXT("ExecuteEQSQuery: No EQS Manager found"));
+        return;
+    }
+
+    APawn* QueryPawn = Controller->GetPawn();
+    if (!QueryPawn)
+    {
+        LogDebug(TEXT("ExecuteEQSQuery: No Pawn found"));
+        return;
     }
 
     if (bEnableDebugOutput)
     {
         LogDebug(FString::Printf(TEXT("Executing EQS Query: %s"), *QueryTemplate->GetName()));
+    }
+
+    // 创建并执行EQS查询
+    FEnvQueryRequest QueryRequest(QueryTemplate, QueryPawn);
+
+    // 使用委托方式执行异步查询
+    FQueryFinishedSignature QueryFinishedDelegate;
+    QueryFinishedDelegate.BindLambda([this](TSharedPtr<FEnvQueryResult> QueryResult)
+    {
+        OnEQSQueryCompleted(QueryResult);
+    });
+
+    int32 QueryID = QueryRequest.Execute(EEnvQueryRunMode::AllMatching, QueryFinishedDelegate);
+
+    if (bEnableDebugOutput)
+    {
+        LogDebug(FString::Printf(TEXT("EQS Query started with ID: %d"), QueryID));
     }
 }
 
@@ -162,41 +178,72 @@ bool FElementalStateTreeTaskBase::ExecuteEQSQueryWithCache(UEnvQuery* QueryTempl
         return Cache.bIsValid;
     }
 
-    // 执行同步查询（注意：这可能会影响性能）
+    // 执行同步EQS查询
     AAIController* Controller = GetAIController(Context);
     if (!Controller)
     {
+        LogDebug(TEXT("ExecuteEQSQueryWithCache: No AI Controller found"));
         return false;
     }
 
-    // TODO: 实现完整的EQS查询
-    // 当前为简化实现，返回一些测试位置
+    UWorld* World = Controller->GetWorld();
+    if (!World)
+    {
+        LogDebug(TEXT("ExecuteEQSQueryWithCache: No World found"));
+        return false;
+    }
+
+    UEnvQueryManager* EQSManager = UEnvQueryManager::GetCurrent(World);
+    if (!EQSManager)
+    {
+        LogDebug(TEXT("ExecuteEQSQueryWithCache: No EQS Manager found"));
+        return false;
+    }
+
+    APawn* QueryPawn = Controller->GetPawn();
+    if (!QueryPawn)
+    {
+        LogDebug(TEXT("ExecuteEQSQueryWithCache: No Pawn found"));
+        return false;
+    }
+
+    // 创建并执行同步EQS查询
+    FEnvQueryRequest QueryRequest(QueryTemplate, QueryPawn);
+    TSharedPtr<FEnvQueryResult> QueryResult = EQSManager->RunInstantQuery(QueryRequest, EEnvQueryRunMode::AllMatching);
+
     OutLocations.Empty();
-    FVector BaseLocation = Controller->GetPawn()->GetActorLocation();
-    
-    // 生成一些测试位置
-    OutLocations.Add(BaseLocation + FVector(100, 0, 0));
-    OutLocations.Add(BaseLocation + FVector(-100, 0, 0));
-    OutLocations.Add(BaseLocation + FVector(0, 100, 0));
-    OutLocations.Add(BaseLocation + FVector(0, -100, 0));
-    
-    if (OutLocations.Num() > 0)
+    bool bQuerySuccessful = false;
+
+    if (QueryResult.IsValid() && QueryResult->IsSuccessful())
     {
-        OutBestLocation = OutLocations[0];
+        QueryResult->GetAllAsLocations(OutLocations);
+        bQuerySuccessful = OutLocations.Num() > 0;
+
+        if (bQuerySuccessful)
+        {
+            OutBestLocation = OutLocations[0];
+
+            // 更新缓存
+            if (bUseEQSCache)
+            {
+                UpdateEQSCache(QueryHash, OutLocations, OutBestLocation, CurrentTime);
+            }
+
+            if (bEnableDebugOutput)
+            {
+                LogDebug(FString::Printf(TEXT("EQS Query completed: %d locations found"), OutLocations.Num()));
+            }
+        }
+    }
+    else
+    {
+        if (bEnableDebugOutput)
+        {
+            LogDebug(TEXT("EQS Query failed or returned no results"));
+        }
     }
 
-    // 更新缓存
-    if (bUseEQSCache)
-    {
-        UpdateEQSCache(QueryHash, OutLocations, OutBestLocation, CurrentTime);
-    }
-
-    if (bEnableDebugOutput)
-    {
-        LogDebug(FString::Printf(TEXT("EQS Query simplified: %d locations generated"), OutLocations.Num()));
-    }
-
-    return OutLocations.Num() > 0;
+    return bQuerySuccessful;
 }
 
 int32 FElementalStateTreeTaskBase::CalculateEQSQueryHash(UEnvQuery* QueryTemplate, const FStateTreeExecutionContext& Context) const
@@ -247,19 +294,18 @@ bool FElementalStateTreeTaskBase::IsEQSCacheValid(int32 QueryHash, float Current
 
 AAIController* FElementalStateTreeTaskBase::GetAIController(const FStateTreeExecutionContext& Context) const
 {
-    if (AActor* Owner = Cast<AActor>(Context.GetOwner()))
-    {
-        if (APawn* Pawn = Cast<APawn>(Owner))
-        {
-            return Cast<AAIController>(Pawn->GetController());
-        }
-    }
-    return nullptr;
+    // 在StateTree中，Context.GetOwner()返回的是AIController
+    return Cast<AAIController>(Context.GetOwner());
 }
 
 AElementalCombatEnemy* FElementalStateTreeTaskBase::GetElementalCombatEnemy(const FStateTreeExecutionContext& Context) const
 {
-    return Cast<AElementalCombatEnemy>(Context.GetOwner());
+    // 从AIController获取其控制的Pawn
+    if (AAIController* AIController = GetAIController(Context))
+    {
+        return Cast<AElementalCombatEnemy>(AIController->GetPawn());
+    }
+    return nullptr;
 }
 
 AActor* FElementalStateTreeTaskBase::GetTargetActor(const FStateTreeExecutionContext& Context) const
@@ -275,9 +321,9 @@ AActor* FElementalStateTreeTaskBase::GetTargetActor(const FStateTreeExecutionCon
     }
 
     // 备用方案：获取玩家Pawn
-    if (AActor* Owner = Cast<AActor>(Context.GetOwner()))
+    if (AAIController* AIController = GetAIController(Context))
     {
-        if (UWorld* World = Owner->GetWorld())
+        if (UWorld* World = AIController->GetWorld())
         {
             return UGameplayStatics::GetPlayerPawn(World, 0);
         }
@@ -288,9 +334,9 @@ AActor* FElementalStateTreeTaskBase::GetTargetActor(const FStateTreeExecutionCon
 
 float FElementalStateTreeTaskBase::GetCurrentWorldTime(const FStateTreeExecutionContext& Context) const
 {
-    if (AActor* Owner = Cast<AActor>(Context.GetOwner()))
+    if (AAIController* AIController = GetAIController(Context))
     {
-        if (UWorld* World = Owner->GetWorld())
+        if (UWorld* World = AIController->GetWorld())
         {
             return World->GetTimeSeconds();
         }
@@ -485,13 +531,30 @@ int32 FElementalStateTreeTaskBase::CalculateUtilityContextHash(const FUtilityCon
     return Hash;
 }
 
-void FElementalStateTreeTaskBase::OnEQSQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
+void FElementalStateTreeTaskBase::OnEQSQueryCompleted(TSharedPtr<FEnvQueryResult> QueryResult) const
 {
     if (bEnableDebugOutput)
     {
-        FString StatusString = (QueryStatus == EEnvQueryStatus::Success) ? TEXT("Success") : TEXT("Failed");
-        LogDebug(FString::Printf(TEXT("EQS Query completed with status: %s"), *StatusString));
+        if (QueryResult.IsValid())
+        {
+            if (QueryResult->IsSuccessful())
+            {
+                TArray<FVector> ResultLocations;
+                QueryResult->GetAllAsLocations(ResultLocations);
+                LogDebug(FString::Printf(TEXT("EQS Query completed successfully: %d results"), ResultLocations.Num()));
+            }
+            else
+            {
+                LogDebug(TEXT("EQS Query completed but failed"));
+            }
+        }
+        else
+        {
+            LogDebug(TEXT("EQS Query completed with invalid result"));
+        }
     }
+
+    // TODO: 处理查询结果（如果需要特殊处理）
 }
 
 // === 性能监控接口实现 ===

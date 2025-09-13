@@ -27,6 +27,14 @@ EStateTreeRunStatus FStateTreeSmartAttackTask::EnterState(FStateTreeExecutionCon
         return EStateTreeRunStatus::Failed;
     }
 
+    // 如果正在攻击，直接返回成功避免重复触发
+    if (InstanceData.EnemyCharacter->IsAttacking())
+    {
+        LogDebug(TEXT("SmartAttackTask: Character is already attacking, task succeeded"));
+        InstanceData.bTaskCompleted = true;
+        return EStateTreeRunStatus::Succeeded;
+    }
+
     // 检查是否应该重新评估
     float CurrentTime = GetCurrentWorldTime(Context);
     if (!ShouldReevaluate(InstanceData, CurrentTime))
@@ -40,6 +48,9 @@ EStateTreeRunStatus FStateTreeSmartAttackTask::EnterState(FStateTreeExecutionCon
         InstanceData.ErrorMessage = TEXT("Failed to evaluate attack options");
         return EStateTreeRunStatus::Failed;
     }
+
+    // 更新决策时间
+    InstanceData.LastDecisionTime = CurrentTime;
 
     // 如果不应该攻击，成功完成但不执行攻击
     if (!InstanceData.bShouldAttack)
@@ -91,29 +102,15 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
     // 创建评分上下文
     FUtilityContext UtilityContext = CreateUtilityContext(Context);
     
-    // 使用同一个AI配置评估不同攻击类型
-    // 近战评分 - 距离越近分数越高
+    // 使用同一个AI配置评估不同攻击类型，让Utility配置完全控制评分
+    // 近战评分
     FUtilityContext MeleeContext = UtilityContext;
-    MeleeContext.DistanceToTarget = UtilityContext.DistanceToTarget; // 近战偏好近距离
     float MeleeScore = CalculateUtilityScoreWithCache(AIProfile, MeleeContext);
-    
-    // 对近战攻击，如果距离太远则降低分数
-    if (UtilityContext.DistanceToTarget > 300.0f) // 近战最佳距离
-    {
-        MeleeScore *= 0.5f; // 远距离时近战分数减半
-    }
     InstanceData.AttackTypeScores.Add(EAIAttackType::Melee, MeleeScore);
-    
-    // 远程评分 - 距离适中分数最高
+
+    // 远程评分
     FUtilityContext RangedContext = UtilityContext;
-    RangedContext.DistanceToTarget = UtilityContext.DistanceToTarget;
     float RangedScore = CalculateUtilityScoreWithCache(AIProfile, RangedContext);
-    
-    // 对远程攻击，如果距离太近则降低分数
-    if (UtilityContext.DistanceToTarget < 200.0f) // 远程最小距离
-    {
-        RangedScore *= 0.3f; // 近距离时远程分数大幅降低
-    }
     InstanceData.AttackTypeScores.Add(EAIAttackType::Ranged, RangedScore);
     
     // 选择最佳攻击类型
@@ -151,12 +148,19 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
 bool FStateTreeSmartAttackTask::ExecuteSelectedAttack(FStateTreeExecutionContext& Context) const
 {
     const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-    
+
     if (!InstanceData.EnemyCharacter)
     {
         return false;
     }
-    
+
+    // 检查是否正在攻击，避免重复攻击
+    if (InstanceData.EnemyCharacter->IsAttacking())
+    {
+        LogDebug(TEXT("SmartAttackTask: Character is already attacking, skipping execution"));
+        return true; // 返回true避免任务失败
+    }
+
     // 设置敌人的攻击类型
     InstanceData.EnemyCharacter->CurrentAttackType = InstanceData.SelectedAttackType;
     
@@ -218,10 +222,17 @@ EStateTreeRunStatus FStateTreeTacticalPositionTask::EnterState(FStateTreeExecuti
     }
 
     float CurrentTime = GetCurrentWorldTime(Context);
-    
+
+    // 如果正在移动，继续运行任务
+    if (InstanceData.bIsMoving)
+    {
+        return EStateTreeRunStatus::Running;
+    }
+
     // 检查是否需要重新评估
     if (!ShouldReevaluatePosition(InstanceData, CurrentTime))
     {
+        // 只有在不需要重新评估且没有在移动时，才返回成功
         return EStateTreeRunStatus::Succeeded;
     }
 
@@ -231,6 +242,9 @@ EStateTreeRunStatus FStateTreeTacticalPositionTask::EnterState(FStateTreeExecuti
         InstanceData.ErrorMessage = TEXT("Failed to find suitable position");
         return EStateTreeRunStatus::Failed;
     }
+
+    // 更新评估时间
+    InstanceData.LastEvaluationTime = CurrentTime;
 
     // 开始移动到选择的位置
     if (!MoveToSelectedPosition(Context))
@@ -279,35 +293,87 @@ bool FStateTreeTacticalPositionTask::EvaluateAndSelectPosition(FStateTreeExecuti
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
     
-    // 简化的位置选择逻辑 - 在实际项目中会使用EQS
-    FVector CurrentPosition = InstanceData.EnemyCharacter->GetActorLocation();
-    FVector TargetPosition = InstanceData.TargetActor ? InstanceData.TargetActor->GetActorLocation() : CurrentPosition;
-    
-    // 选择一个基本的战术位置（可以通过Utility AI进一步优化）
-    FVector Direction = (TargetPosition - CurrentPosition).GetSafeNormal();
-    FVector SideDirection = FVector::CrossProduct(Direction, FVector::UpVector).GetSafeNormal();
-    
-    // 简单的侧翼位置
-    FVector CandidatePosition = TargetPosition + SideDirection * 300.0f + Direction * -200.0f;
-    
-    // 创建评分上下文并评分
-    FUtilityContext UtilityContext = CreateUtilityContext(Context);
-    UtilityContext.DistanceToTarget = FVector::Dist(CandidatePosition, TargetPosition);
-    
-    float PositionScore = CalculateUtilityScoreWithCache(InstanceData.PositionScoringProfile, UtilityContext);
-    
-    // 更新实例数据
-    InstanceData.SelectedPosition = CandidatePosition;
-    InstanceData.FinalScore = PositionScore;
-    
-    if (bEnableDebugOutput)
+    // 检查是否有配置的位置查询模板
+    if (!InstanceData.PositionQuery)
     {
-        LogDebug(FString::Printf(TEXT("TacticalPosition: Selected (%.1f,%.1f,%.1f), Score=%.3f"), 
-                                CandidatePosition.X, CandidatePosition.Y, CandidatePosition.Z,
-                                PositionScore));
+        if (bEnableDebugOutput)
+        {
+            LogDebug(TEXT("TacticalPosition: No PositionQuery configured, using fallback logic"));
+        }
+
+        // 回退到简化逻辑
+        FVector CurrentPosition = InstanceData.EnemyCharacter->GetActorLocation();
+        FVector TargetPosition = InstanceData.TargetActor ? InstanceData.TargetActor->GetActorLocation() : CurrentPosition;
+
+        FVector Direction = (TargetPosition - CurrentPosition).GetSafeNormal();
+        FVector SideDirection = FVector::CrossProduct(Direction, FVector::UpVector).GetSafeNormal();
+        FVector CandidatePosition = TargetPosition + SideDirection * 300.0f + Direction * -200.0f;
+
+        FUtilityContext UtilityContext = CreateUtilityContext(Context);
+        UtilityContext.DistanceToTarget = FVector::Dist(CandidatePosition, TargetPosition);
+
+        float PositionScore = CalculateUtilityScoreWithCache(InstanceData.PositionScoringProfile, UtilityContext);
+
+        InstanceData.SelectedPosition = CandidatePosition;
+        InstanceData.FinalScore = PositionScore;
+
+        return PositionScore > 0.01f;
     }
-    
-    return PositionScore > 0.01f;
+
+    // 使用EQS查询获取战术位置
+    TArray<FVector> CandidatePositions;
+    FVector BestPosition;
+
+    if (ExecuteEQSQueryWithCache(InstanceData.PositionQuery, Context, CandidatePositions, BestPosition))
+    {
+        // 创建评分上下文
+        FUtilityContext BaseUtilityContext = CreateUtilityContext(Context);
+
+        // 评估所有候选位置并选择最佳位置
+        float BestScore = 0.0f;
+        FVector BestTacticalPosition = BestPosition;
+
+        for (const FVector& Position : CandidatePositions)
+        {
+            // 为每个位置创建评分上下文
+            FUtilityContext PositionContext = BaseUtilityContext;
+            PositionContext.DistanceToTarget = FVector::Dist(Position,
+                InstanceData.TargetActor ? InstanceData.TargetActor->GetActorLocation() : Position);
+
+            // 计算该位置的Utility评分
+            float PositionScore = CalculateUtilityScoreWithCache(InstanceData.PositionScoringProfile, PositionContext);
+
+            if (PositionScore > BestScore)
+            {
+                BestScore = PositionScore;
+                BestTacticalPosition = Position;
+            }
+        }
+
+        // 更新实例数据
+        InstanceData.SelectedPosition = BestTacticalPosition;
+        InstanceData.FinalScore = BestScore;
+
+        if (bEnableDebugOutput)
+        {
+            LogDebug(FString::Printf(TEXT("TacticalPosition: EQS found %d positions, selected (%.1f,%.1f,%.1f), Score=%.3f"),
+                                    CandidatePositions.Num(),
+                                    BestTacticalPosition.X, BestTacticalPosition.Y, BestTacticalPosition.Z,
+                                    BestScore));
+        }
+
+        return BestScore > 0.01f;
+    }
+    else
+    {
+        if (bEnableDebugOutput)
+        {
+            LogDebug(TEXT("TacticalPosition: EQS query failed"));
+        }
+
+        InstanceData.FinalScore = 0.0f;
+        return false;
+    }
 }
 
 bool FStateTreeTacticalPositionTask::MoveToSelectedPosition(FStateTreeExecutionContext& Context) const
