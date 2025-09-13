@@ -195,27 +195,71 @@ EStateTreeRunStatus FStateTreeUtilityComparisonTask::EnterState(FStateTreeExecut
         return EStateTreeRunStatus::Failed;
     }
 
+    // 获取AIController配置
+    AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.AIController);
+    if (!AIController)
+    {
+        InstanceData.ErrorMessage = TEXT("No ElementalCombatAIController found");
+        return EStateTreeRunStatus::Failed;
+    }
+
     // 创建评分上下文
     FUtilityContext UtilityContext = CreateUtilityContext(Context);
 
-    // 计算两个配置的评分
-    InstanceData.ScoreA = CalculateUtilityScoreWithCache(InstanceData.ProfileA, UtilityContext);
-    InstanceData.ScoreB = CalculateUtilityScoreWithCache(InstanceData.ProfileB, UtilityContext);
-
-    // 比较评分
-    InstanceData.bIsABetter = InstanceData.ScoreA > InstanceData.ScoreB;
-    InstanceData.FinalScore = InstanceData.bIsABetter ? InstanceData.ScoreA : InstanceData.ScoreB;
-    InstanceData.BetterProfileName = InstanceData.bIsABetter ? InstanceData.ProfileA.ProfileName : InstanceData.ProfileB.ProfileName;
-    InstanceData.ScoreDifference = FMath::Abs(InstanceData.ScoreA - InstanceData.ScoreB);
-
-    InstanceData.bTaskCompleted = InstanceData.FinalScore > 0.01f;
-
-    if (bEnableDebugOutput)
+    if (InstanceData.bUseWeightVariations)
     {
-        LogDebug(FString::Printf(TEXT("UtilityComparison: %s(%.3f) vs %s(%.3f) -> %s wins (diff: %.3f)"), 
-                                *InstanceData.ProfileA.ProfileName, InstanceData.ScoreA,
-                                *InstanceData.ProfileB.ProfileName, InstanceData.ScoreB,
-                                *InstanceData.BetterProfileName, InstanceData.ScoreDifference));
+        // 使用权重变化模式：基于AIController配置进行两种不同的权重调整
+        FUtilityProfile ProfileA = AIController->GetCurrentAIProfile();
+        FUtilityProfile ProfileB = AIController->GetCurrentAIProfile();
+
+        // 应用权重变化A
+        for (const auto& WeightPair : InstanceData.WeightVariationA)
+        {
+            ProfileA.SetWeight(WeightPair.Key, ProfileA.GetWeight(WeightPair.Key) * WeightPair.Value);
+        }
+
+        // 应用权重变化B
+        for (const auto& WeightPair : InstanceData.WeightVariationB)
+        {
+            ProfileB.SetWeight(WeightPair.Key, ProfileB.GetWeight(WeightPair.Key) * WeightPair.Value);
+        }
+
+        // 计算两个配置的评分
+        InstanceData.ScoreA = CalculateUtilityScoreWithCache(ProfileA, UtilityContext);
+        InstanceData.ScoreB = CalculateUtilityScoreWithCache(ProfileB, UtilityContext);
+
+        // 比较评分
+        InstanceData.bIsABetter = InstanceData.ScoreA > InstanceData.ScoreB;
+        InstanceData.FinalScore = InstanceData.bIsABetter ? InstanceData.ScoreA : InstanceData.ScoreB;
+        InstanceData.BetterProfileName = InstanceData.bIsABetter ? TEXT("VariationA") : TEXT("VariationB");
+        InstanceData.ScoreDifference = FMath::Abs(InstanceData.ScoreA - InstanceData.ScoreB);
+
+        InstanceData.bTaskCompleted = InstanceData.FinalScore > 0.01f;
+
+        if (bEnableDebugOutput)
+        {
+            LogDebug(FString::Printf(TEXT("UtilityComparison: VariationA(%.3f) vs VariationB(%.3f) -> %s wins (diff: %.3f)"),
+                                    InstanceData.ScoreA, InstanceData.ScoreB,
+                                    *InstanceData.BetterProfileName, InstanceData.ScoreDifference));
+        }
+    }
+    else
+    {
+        // 降级模式：只使用基础配置
+        const FUtilityProfile& BaseProfile = AIController->GetCurrentAIProfile();
+        InstanceData.ScoreA = CalculateUtilityScoreWithCache(BaseProfile, UtilityContext);
+        InstanceData.ScoreB = InstanceData.ScoreA; // 相同配置
+        InstanceData.bIsABetter = true;
+        InstanceData.FinalScore = InstanceData.ScoreA;
+        InstanceData.BetterProfileName = BaseProfile.ProfileName;
+        InstanceData.ScoreDifference = 0.0f;
+        InstanceData.bTaskCompleted = InstanceData.FinalScore > 0.01f;
+
+        if (bEnableDebugOutput)
+        {
+            LogDebug(FString::Printf(TEXT("UtilityComparison: Using base profile %s (%.3f)"),
+                                    *BaseProfile.ProfileName, InstanceData.ScoreA));
+        }
     }
 
     return InstanceData.FinalScore > 0.01f ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Failed;
@@ -225,13 +269,11 @@ EStateTreeRunStatus FStateTreeUtilityComparisonTask::EnterState(FStateTreeExecut
 FText FStateTreeUtilityComparisonTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
 {
     const FInstanceDataType* InstanceData = InstanceDataView.GetPtr<FInstanceDataType>();
-    if (InstanceData)
+    if (InstanceData && InstanceData->bUseWeightVariations)
     {
-        return FText::FromString(FString::Printf(TEXT("Compare: %s vs %s"), 
-                                                *InstanceData->ProfileA.ProfileName,
-                                                *InstanceData->ProfileB.ProfileName));
+        return FText::FromString(TEXT("Compare: Weight Variations A vs B"));
     }
-    return NSLOCTEXT("StateTreeEditor", "UtilityComparison", "Utility Score Comparison");
+    return NSLOCTEXT("StateTreeEditor", "UtilityComparison", "Utility Score Comparison (AIController Based)");
 }
 #endif
 
@@ -251,11 +293,19 @@ EStateTreeRunStatus FStateTreeDynamicUtilityTask::EnterState(FStateTreeExecution
     // 创建评分上下文
     FUtilityContext UtilityContext = CreateUtilityContext(Context);
 
+    // 获取AIController配置
+    AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.AIController);
+    if (!AIController)
+    {
+        InstanceData.ErrorMessage = TEXT("No ElementalCombatAIController found");
+        return EStateTreeRunStatus::Failed;
+    }
+
     // 计算动态权重调整
     CalculateDynamicWeights(UtilityContext, InstanceData);
 
     // 应用调整后的权重计算评分
-    FUtilityProfile AdjustedProfile = InstanceData.BaseProfile;
+    FUtilityProfile AdjustedProfile = AIController->GetCurrentAIProfile();
     for (const auto& Pair : InstanceData.CurrentWeights)
     {
         AdjustedProfile.SetWeight(Pair.Key, Pair.Value);
@@ -266,8 +316,8 @@ EStateTreeRunStatus FStateTreeDynamicUtilityTask::EnterState(FStateTreeExecution
 
     if (bEnableDebugOutput)
     {
-        LogDebug(FString::Printf(TEXT("DynamicUtility[%s]: Adjusted score %.3f"), 
-                                *InstanceData.BaseProfile.ProfileName, InstanceData.FinalScore));
+        LogDebug(FString::Printf(TEXT("DynamicUtility[%s]: Adjusted score %.3f"),
+                                *AdjustedProfile.ProfileName, InstanceData.FinalScore));
         
         for (const auto& Pair : InstanceData.CurrentWeights)
         {
@@ -288,12 +338,19 @@ EStateTreeRunStatus FStateTreeDynamicUtilityTask::Tick(FStateTreeExecutionContex
         return EStateTreeRunStatus::Succeeded;
     }
 
+    // 获取AIController配置
+    AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.AIController);
+    if (!AIController)
+    {
+        return EStateTreeRunStatus::Failed;
+    }
+
     // 持续更新动态权重
     FUtilityContext UtilityContext = CreateUtilityContext(Context);
     CalculateDynamicWeights(UtilityContext, InstanceData);
 
     // 重新计算评分
-    FUtilityProfile AdjustedProfile = InstanceData.BaseProfile;
+    FUtilityProfile AdjustedProfile = AIController->GetCurrentAIProfile();
     for (const auto& Pair : InstanceData.CurrentWeights)
     {
         AdjustedProfile.SetWeight(Pair.Key, Pair.Value);
@@ -306,8 +363,14 @@ EStateTreeRunStatus FStateTreeDynamicUtilityTask::Tick(FStateTreeExecutionContex
 
 void FStateTreeDynamicUtilityTask::CalculateDynamicWeights(const FUtilityContext& UtilityContext, FInstanceDataType& InstanceData) const
 {
-    // 获取基础权重
-    InstanceData.CurrentWeights = InstanceData.BaseProfile.Weights;
+    // 获取AIController配置作为基础权重
+    AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.AIController);
+    if (!AIController)
+    {
+        return;
+    }
+    const FUtilityProfile& AIProfile = AIController->GetCurrentAIProfile();
+    InstanceData.CurrentWeights = AIProfile.Weights;
 
     if (!InstanceData.bUseDynamicAdjustment)
     {
@@ -359,7 +422,7 @@ FText FStateTreeDynamicUtilityTask::GetDescription(const FGuid& ID, FStateTreeDa
     const FInstanceDataType* InstanceData = InstanceDataView.GetPtr<FInstanceDataType>();
     if (InstanceData)
     {
-        return FText::FromString(FString::Printf(TEXT("Dynamic Utility: %s"), *InstanceData->BaseProfile.ProfileName));
+        return FText::FromString(TEXT("Dynamic Utility: AIController Config"));
     }
     return NSLOCTEXT("StateTreeEditor", "DynamicUtility", "Dynamic Utility Weights");
 }

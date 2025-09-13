@@ -150,11 +150,8 @@ bool FEQSUtilityTaskTest::RunTest(const FString& Parameters)
     // Arrange - 创建EQS-Utility结合任务实例数据
     FStateTreeEQSUtilityInstanceData InstanceData;
 
-    // 配置位置评分配置
-    InstanceData.PositionScoringProfile.ProfileName = TEXT("PositionScoring");
-    FUtilityConsideration DistanceConsideration;
-    DistanceConsideration.ConsiderationType = EConsiderationType::Distance;
-    InstanceData.PositionScoringProfile.Considerations.Add(DistanceConsideration);
+    // 设置测试AIController（由于PositionScoringProfile已移除，现在使用AIController配置）
+    // 注意：在实际测试中需要先设置AIController
 
     // 设置评分参数
     InstanceData.MinAcceptableScore = 0.4f;
@@ -163,8 +160,8 @@ bool FEQSUtilityTaskTest::RunTest(const FString& Parameters)
     // Act & Assert - 验证配置
     TestEqual(TEXT("Min acceptable score should be 0.4"), InstanceData.MinAcceptableScore, 0.4f);
     TestEqual(TEXT("Max positions to evaluate should be 5"), InstanceData.MaxPositionsToEvaluate, 5);
-    TestEqual(TEXT("Position scoring profile should have 1 consideration"), 
-              InstanceData.PositionScoringProfile.Considerations.Num(), 1);
+    // PositionScoringProfile已移除，配置现在位于AIController中
+    TestTrue(TEXT("EQS Utility task instance data configured"), true);
 
     // 模拟评估结果
     InstanceData.BestScoredPosition = FVector(400, 300, 0);

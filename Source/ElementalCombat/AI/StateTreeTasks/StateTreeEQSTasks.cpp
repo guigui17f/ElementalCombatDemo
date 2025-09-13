@@ -4,6 +4,7 @@
 #include "StateTreeExecutionContext.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "AIController.h"
+#include "AI/ElementalCombatAIController.h"
 #include "Engine/World.h"
 
 // === FStateTreeEQSQueryTask Implementation ===
@@ -396,7 +397,7 @@ bool FStateTreeEQSUtilityTask::ProcessEQSResults(const TArray<FVector>& Location
     
     for (const FVector& Location : Locations)
     {
-        float PositionScore = EvaluatePosition(Location, BaseContext, InstanceData.PositionScoringProfile);
+        float PositionScore = EvaluatePosition(Location, BaseContext, Context);
         InstanceData.EvaluatedPositions.Add(Location, PositionScore);
         
         if (PositionScore > BestScore && PositionScore >= InstanceData.MinAcceptableScore)
@@ -413,13 +414,23 @@ bool FStateTreeEQSUtilityTask::ProcessEQSResults(const TArray<FVector>& Location
     return InstanceData.bFoundValidPosition;
 }
 
-float FStateTreeEQSUtilityTask::EvaluatePosition(const FVector& Position, const FUtilityContext& BaseContext, const FUtilityProfile& ScoringProfile) const
+float FStateTreeEQSUtilityTask::EvaluatePosition(const FVector& Position, const FUtilityContext& BaseContext, FStateTreeExecutionContext& Context) const
 {
+    FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+
+    // 获取AIController配置
+    AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.AIController);
+    if (!AIController)
+    {
+        return 0.0f;
+    }
+    const FUtilityProfile& AIProfile = AIController->GetCurrentAIProfile();
+
     // Create context for this specific position
     FUtilityContext PositionContext = BaseContext;
     PositionContext.SetCustomValue(TEXT("PositionDistance"), FVector::Dist(Position, BaseContext.SelfActor.IsValid() ? BaseContext.SelfActor->GetActorLocation() : FVector::ZeroVector));
-    
-    return ScoringProfile.CalculateScore(PositionContext);
+
+    return AIProfile.CalculateScore(PositionContext);
 }
 
 #if WITH_EDITOR

@@ -258,20 +258,19 @@ bool FUtilityComparisonTaskTest::RunTest(const FString& Parameters)
     AElementalCombatEnemy* TestEnemy = FStateTreeTestHelpers::CreateTestEnemyWithAI(TestWorld, TestProfile);
     AddErrorIfFalse(TestEnemy != nullptr, TEXT("Failed to create test enemy"));
 
-    // 创建比较任务实例数据
+    // 创建比较任务实例数据（ProfileA和ProfileB已移除，现在使用权重变化）
     FStateTreeUtilityComparisonInstanceData InstanceData;
     InstanceData.EnemyCharacter = TestEnemy;
-    InstanceData.ProfileA = FStateTreeTestHelpers::CreateTestUtilityProfile(TEXT("ProfileA"));
-    InstanceData.ProfileB = FStateTreeTestHelpers::CreateTestUtilityProfile(TEXT("ProfileB"));
-    
-    // 设置不同的权重以便比较
-    InstanceData.ProfileA.Weights[EConsiderationType::Health] = 0.8f;
-    InstanceData.ProfileB.Weights[EConsiderationType::Health] = 0.2f;
+    InstanceData.bUseWeightVariations = true;
 
-    // Act & Assert
-    TestTrue(TEXT("ProfileA should be configured"), !InstanceData.ProfileA.ProfileName.IsEmpty());
-    TestTrue(TEXT("ProfileB should be configured"), !InstanceData.ProfileB.ProfileName.IsEmpty());
-    TestNotEqual(TEXT("Profiles should have different names"), InstanceData.ProfileA.ProfileName, InstanceData.ProfileB.ProfileName);
+    // 设置不同的权重变化
+    InstanceData.WeightVariationA.Add(EConsiderationType::Health, 0.8f);
+    InstanceData.WeightVariationB.Add(EConsiderationType::Health, 0.2f);
+
+    // Act & Assert - 测试权重变化配置
+    TestTrue(TEXT("Weight variations should be enabled"), InstanceData.bUseWeightVariations);
+    TestTrue(TEXT("Weight variation A should have Health entry"), InstanceData.WeightVariationA.Contains(EConsiderationType::Health));
+    TestTrue(TEXT("Weight variation B should have Health entry"), InstanceData.WeightVariationB.Contains(EConsiderationType::Health));
 
     // Cleanup
     FStateTreeTestHelpers::CleanupTestWorld(TestWorld);
@@ -301,7 +300,7 @@ bool FDynamicUtilityTaskTest::RunTest(const FString& Parameters)
     // 创建动态权重任务实例数据
     FStateTreeDynamicUtilityInstanceData InstanceData;
     InstanceData.EnemyCharacter = TestEnemy;
-    InstanceData.BaseProfile = TestProfile;
+    // BaseProfile已移除，现在使用AIController配置
     InstanceData.bUseDynamicAdjustment = true;
     
     // 设置权重调整
@@ -309,7 +308,7 @@ bool FDynamicUtilityTaskTest::RunTest(const FString& Parameters)
     InstanceData.WeightAdjustments.Add(EConsiderationType::Distance, 0.8f);
 
     // Act & Assert
-    TestTrue(TEXT("Base profile should be set"), !InstanceData.BaseProfile.ProfileName.IsEmpty());
+    TestTrue(TEXT("Test enemy should have AIController"), TestEnemy->GetController() != nullptr);
     TestTrue(TEXT("Dynamic adjustment should be enabled"), InstanceData.bUseDynamicAdjustment);
     TestTrue(TEXT("Weight adjustments should be configured"), InstanceData.WeightAdjustments.Num() > 0);
 

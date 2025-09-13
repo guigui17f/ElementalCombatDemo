@@ -312,7 +312,15 @@ bool FStateTreeTacticalPositionTask::EvaluateAndSelectPosition(FStateTreeExecuti
         FUtilityContext UtilityContext = CreateUtilityContext(Context);
         UtilityContext.DistanceToTarget = FVector::Dist(CandidatePosition, TargetPosition);
 
-        float PositionScore = CalculateUtilityScoreWithCache(InstanceData.PositionScoringProfile, UtilityContext);
+        // 获取AIController配置
+        AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.AIController);
+        if (!AIController)
+        {
+            return false;
+        }
+        const FUtilityProfile& AIProfile = AIController->GetCurrentAIProfile();
+
+        float PositionScore = CalculateUtilityScoreWithCache(AIProfile, UtilityContext);
 
         InstanceData.SelectedPosition = CandidatePosition;
         InstanceData.FinalScore = PositionScore;
@@ -340,8 +348,16 @@ bool FStateTreeTacticalPositionTask::EvaluateAndSelectPosition(FStateTreeExecuti
             PositionContext.DistanceToTarget = FVector::Dist(Position,
                 InstanceData.TargetActor ? InstanceData.TargetActor->GetActorLocation() : Position);
 
+            // 获取AIController配置
+            AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.AIController);
+            if (!AIController)
+            {
+                continue;
+            }
+            const FUtilityProfile& AIProfile = AIController->GetCurrentAIProfile();
+
             // 计算该位置的Utility评分
-            float PositionScore = CalculateUtilityScoreWithCache(InstanceData.PositionScoringProfile, PositionContext);
+            float PositionScore = CalculateUtilityScoreWithCache(AIProfile, PositionContext);
 
             if (PositionScore > BestScore)
             {

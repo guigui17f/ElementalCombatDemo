@@ -209,10 +209,6 @@ struct FStateTreeEQSUtilityInstanceData : public FElementalStateTreeInstanceData
     UPROPERTY(EditAnywhere, Category = "EQS Utility")
     TObjectPtr<UEnvQuery> QueryTemplate;
 
-    /** 位置评分配置文件 */
-    UPROPERTY(EditAnywhere, Category = "EQS Utility")
-    FUtilityProfile PositionScoringProfile;
-
     /** 最小可接受评分 */
     UPROPERTY(EditAnywhere, Category = "EQS Utility", meta = (ClampMin = "0.0", ClampMax = "1.0"))
     float MinAcceptableScore = 0.3f;
@@ -265,8 +261,8 @@ struct ELEMENTALCOMBAT_API FStateTreeEQSUtilityTask : public FElementalStateTree
 
 protected:
     /** 使用Utility评分评估位置 */
-    float EvaluatePosition(const FVector& Position, const FUtilityContext& BaseContext, 
-                                  const FUtilityProfile& ScoringProfile) const;
+    float EvaluatePosition(const FVector& Position, const FUtilityContext& BaseContext,
+                                  FStateTreeExecutionContext& Context) const;
 
     /** 处理EQS查询结果并进行Utility评分 */
     bool ProcessEQSResults(const TArray<FVector>& Locations, FStateTreeExecutionContext& Context) const;

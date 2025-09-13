@@ -136,13 +136,17 @@ struct FStateTreeUtilityComparisonInstanceData : public FElementalStateTreeInsta
 {
     GENERATED_BODY()
 
-    /** 第一个评分配置 */
+    /** 比较模式：使用相同配置但不同权重调整 */
     UPROPERTY(EditAnywhere, Category = "Comparison")
-    FUtilityProfile ProfileA;
+    bool bUseWeightVariations = true;
 
-    /** 第二个评分配置 */
+    /** 权重变化A（相对于基础配置的调整） */
     UPROPERTY(EditAnywhere, Category = "Comparison")
-    FUtilityProfile ProfileB;
+    TMap<EConsiderationType, float> WeightVariationA;
+
+    /** 权重变化B（相对于基础配置的调整） */
+    UPROPERTY(EditAnywhere, Category = "Comparison")
+    TMap<EConsiderationType, float> WeightVariationB;
 
     /** 评分A的结果（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")
@@ -200,9 +204,6 @@ struct FStateTreeDynamicUtilityInstanceData : public FElementalStateTreeInstance
 {
     GENERATED_BODY()
 
-    /** 基础评分配置 */
-    UPROPERTY(EditAnywhere, Category = "Dynamic Utility")
-    FUtilityProfile BaseProfile;
 
     /** 权重调整映射 */
     UPROPERTY(EditAnywhere, Category = "Dynamic Utility")

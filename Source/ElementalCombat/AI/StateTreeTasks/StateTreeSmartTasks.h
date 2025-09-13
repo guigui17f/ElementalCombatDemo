@@ -109,10 +109,6 @@ struct FStateTreeTacticalPositionInstanceData : public FElementalStateTreeInstan
     UPROPERTY(EditAnywhere, Category = "Position Selection")
     TObjectPtr<UEnvQuery> PositionQuery;
 
-    /** 位置评分配置 */
-    UPROPERTY(EditAnywhere, Category = "Position Selection")
-    FUtilityProfile PositionScoringProfile;
-
     /** 最小移动距离（避免微小移动） */
     UPROPERTY(EditAnywhere, Category = "Position Selection", meta = (ClampMin = "0.0"))
     float MinMovementDistance = 100.0f;
