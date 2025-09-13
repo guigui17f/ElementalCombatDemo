@@ -18,13 +18,7 @@ struct FStateTreeUniversalUtilityInstanceData : public FElementalStateTreeInstan
 {
     GENERATED_BODY()
 
-    /** Utility配置数据表 */
-    UPROPERTY(EditAnywhere, Category = "Utility Scoring")
-    UDataTable* ProfileDataTable;
-    
-    /** 选择的配置行名称 */
-    UPROPERTY(EditAnywhere, Category = "Utility Scoring")
-    FName ProfileRowName;
+    // 移除DataTable配置，改为从AIController获取配置
 
     /** 最终评分结果（输出） */
     UPROPERTY(VisibleAnywhere, Category = "Output")

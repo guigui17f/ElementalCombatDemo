@@ -5,6 +5,7 @@
 #include "AI/ElementalCombatEnemy.h"
 #include "AIController.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "ElementalCombatAIController.h"
 
 // === FStateTreeSmartAttackTask 实现 ===
 
@@ -73,13 +74,16 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
     
-    // 验证DataTable引用
-    if (!InstanceData.AttackProfilesTable)
+    // 从AIController获取配置
+    AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.EnemyCharacter->GetController());
+    if (!AIController)
     {
-        LogDebug(TEXT("SmartAttackTask: AttackProfilesTable is null"));
-        InstanceData.ErrorMessage = TEXT("No AttackProfilesTable found");
+        LogDebug(TEXT("SmartAttackTask: AIController is null or not ElementalCombatAIController"));
+        InstanceData.ErrorMessage = TEXT("No ElementalCombatAIController found");
         return false;
     }
+    
+    const FUtilityProfile& AIProfile = AIController->GetCurrentAIProfile();
     
     // 清除之前的评分
     InstanceData.AttackTypeScores.Empty();
@@ -87,35 +91,28 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
     // 创建评分上下文
     FUtilityContext UtilityContext = CreateUtilityContext(Context);
     
-    // 从DataTable获取近战配置并评估
-    FUtilityScore MeleeScore;
-    FUtilityProfileTableRow* MeleeProfileRow = InstanceData.AttackProfilesTable->FindRow<FUtilityProfileTableRow>(
-        InstanceData.MeleeProfileRowName, TEXT("SmartAttackTask_Melee"));
+    // 使用同一个AI配置评估不同攻击类型
+    // 近战评分 - 距离越近分数越高
+    FUtilityContext MeleeContext = UtilityContext;
+    MeleeContext.DistanceToTarget = UtilityContext.DistanceToTarget; // 近战偏好近距离
+    FUtilityScore MeleeScore = CalculateUtilityScoreWithCache(AIProfile, MeleeContext);
     
-    if (MeleeProfileRow)
+    // 对近战攻击，如果距离太远则降低分数
+    if (UtilityContext.DistanceToTarget > 300.0f) // 近战最佳距离
     {
-        MeleeScore = CalculateUtilityScoreWithCache(MeleeProfileRow->Profile, UtilityContext);
-    }
-    else
-    {
-        LogDebug(FString::Printf(TEXT("SmartAttackTask: Melee profile '%s' not found"), 
-                                *InstanceData.MeleeProfileRowName.ToString()));
+        MeleeScore.FinalScore *= 0.5f; // 远距离时近战分数减半
     }
     InstanceData.AttackTypeScores.Add(EAIAttackType::Melee, MeleeScore.FinalScore);
     
-    // 从DataTable获取远程配置并评估
-    FUtilityScore RangedScore;
-    FUtilityProfileTableRow* RangedProfileRow = InstanceData.AttackProfilesTable->FindRow<FUtilityProfileTableRow>(
-        InstanceData.RangedProfileRowName, TEXT("SmartAttackTask_Ranged"));
+    // 远程评分 - 距离适中分数最高
+    FUtilityContext RangedContext = UtilityContext;
+    RangedContext.DistanceToTarget = UtilityContext.DistanceToTarget;
+    FUtilityScore RangedScore = CalculateUtilityScoreWithCache(AIProfile, RangedContext);
     
-    if (RangedProfileRow)
+    // 对远程攻击，如果距离太近则降低分数
+    if (UtilityContext.DistanceToTarget < 200.0f) // 远程最小距离
     {
-        RangedScore = CalculateUtilityScoreWithCache(RangedProfileRow->Profile, UtilityContext);
-    }
-    else
-    {
-        LogDebug(FString::Printf(TEXT("SmartAttackTask: Ranged profile '%s' not found"), 
-                                *InstanceData.RangedProfileRowName.ToString()));
+        RangedScore.FinalScore *= 0.3f; // 近距离时远程分数大幅降低
     }
     InstanceData.AttackTypeScores.Add(EAIAttackType::Ranged, RangedScore.FinalScore);
     

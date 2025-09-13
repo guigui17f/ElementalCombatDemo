@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Engine/DataTable.h"
 #include "ElementalCombatGameInstance.generated.h"
 
 class UElementalDataAsset;
 class UElementalConfigManager;
+struct FUtilityProfile;
 
 /**
  * 元素战斗游戏实例
@@ -30,6 +32,10 @@ protected:
 	UPROPERTY(Transient)
 	UElementalDataAsset* DefaultElementalDataAssetInstance;
 
+	// AI配置数据表（FUtilityProfileTableRow结构）
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="AI Configuration")
+	UDataTable* AIProfileDataTable;
+
 public:
 	// 重写初始化方法
 	virtual void Init() override;
@@ -47,4 +53,11 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="ElementalCombat")
 	void SetDefaultElementalDataAsset(UElementalDataAsset* NewDataAsset);
+
+	/**
+	 * 从配置表中随机获取一个AI配置
+	 * @return 随机选择的AI配置，如果表为空返回默认配置
+	 */
+	UFUNCTION(BlueprintCallable, Category="AI Configuration")
+	FUtilityProfile GetRandomAIProfile() const;
 };

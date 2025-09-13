@@ -22,17 +22,7 @@ struct FStateTreeSmartAttackInstanceData : public FElementalStateTreeInstanceDat
 {
     GENERATED_BODY()
 
-    /** 攻击配置数据表 */
-    UPROPERTY(EditAnywhere, Category = "Attack Scoring")
-    UDataTable* AttackProfilesTable;
-    
-    /** 近战配置行名称 */
-    UPROPERTY(EditAnywhere, Category = "Attack Scoring")
-    FName MeleeProfileRowName;
-    
-    /** 远程配置行名称 */
-    UPROPERTY(EditAnywhere, Category = "Attack Scoring")
-    FName RangedProfileRowName;
+    // 移除DataTable配置，改为从AIController获取配置
 
     // 技能攻击功能已移除，因为EAIAttackType中没有Skill类型
 
