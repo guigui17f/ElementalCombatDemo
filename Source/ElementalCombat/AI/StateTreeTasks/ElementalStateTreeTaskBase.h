@@ -26,23 +26,23 @@ struct ELEMENTALCOMBAT_API FEQSQueryCache
     GENERATED_BODY()
 
     /** 缓存的查询结果位置 */
-    UPROPERTY(BlueprintReadOnly, Category = "EQS Cache")
+    UPROPERTY(BlueprintReadOnly, Category = "ElementalCombat|AI")
     TArray<FVector> CachedLocations;
 
     /** 最佳位置 */
-    UPROPERTY(BlueprintReadOnly, Category = "EQS Cache")
+    UPROPERTY(BlueprintReadOnly, Category = "ElementalCombat|AI")
     FVector BestLocation = FVector::ZeroVector;
 
     /** 缓存时间戳 */
-    UPROPERTY(BlueprintReadOnly, Category = "EQS Cache")
+    UPROPERTY(BlueprintReadOnly, Category = "ElementalCombat|AI")
     float CacheTimestamp = -1.0f;
 
     /** 查询哈希值（用于检测查询参数是否变化） */
-    UPROPERTY(BlueprintReadOnly, Category = "EQS Cache")
+    UPROPERTY(BlueprintReadOnly, Category = "ElementalCombat|AI")
     int32 QueryHash = 0;
 
     /** 是否有效 */
-    UPROPERTY(BlueprintReadOnly, Category = "EQS Cache")
+    UPROPERTY(BlueprintReadOnly, Category = "ElementalCombat|AI")
     bool bIsValid = false;
 
     FEQSQueryCache()
@@ -76,27 +76,27 @@ struct ELEMENTALCOMBAT_API FElementalStateTreeTaskBase : public FStateTreeTaskCo
 
 protected:
     /** EQS查询缓存有效时间（秒） */
-    UPROPERTY(EditAnywhere, Category = "Performance", meta = (ClampMin = "0.0"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "0.0"))
     float EQSCacheValidDuration = 1.0f;
 
     /** Utility评分缓存有效时间（秒） */
-    UPROPERTY(EditAnywhere, Category = "Performance", meta = (ClampMin = "0.0"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "0.0"))
     float UtilityCacheValidDuration = 0.1f;
 
     /** 是否启用EQS缓存 */
-    UPROPERTY(EditAnywhere, Category = "Performance")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     bool bUseEQSCache = true;
 
     /** 是否启用Utility缓存 */
-    UPROPERTY(EditAnywhere, Category = "Performance")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     bool bUseUtilityCache = true;
 
     /** 是否输出调试信息 */
-    UPROPERTY(EditAnywhere, Category = "Debug")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI|Debug")
     bool bEnableDebugOutput = false;
 
     /** 调试信息显示时间 */
-    UPROPERTY(EditAnywhere, Category = "Debug", meta = (ClampMin = "0.0"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI|Debug", meta = (ClampMin = "0.0"))
     float DebugDisplayDuration = 3.0f;
 
 private:

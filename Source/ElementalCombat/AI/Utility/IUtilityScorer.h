@@ -30,19 +30,19 @@ public:
      * @param Context 评分上下文信息
      * @return 综合评分结果
      */
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ElementalCombat|AI")
     float CalculateUtilityScore(const FUtilityContext& Context);
 
     /**
      * 获取评分器的名称（用于调试）
      */
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ElementalCombat|AI")
     FString GetScorerName() const;
 
     /**
      * 检查评分器是否可用
      */
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ElementalCombat|AI")
     bool IsScoreValid(const FUtilityContext& Context) const;
 
     // C++原生接口（可选实现）
@@ -65,19 +65,19 @@ public:
 
 protected:
     /** 评分配置文件 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Utility Scorer")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     FUtilityProfile ScoringProfile;
 
     /** 评分缓存有效时间（秒） */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Utility Scorer", meta = (ClampMin = "0.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI", meta = (ClampMin = "0.0"))
     float CacheValidDuration = 0.1f;
 
     /** 是否启用评分缓存 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Utility Scorer")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     bool bUseCaching = true;
 
     /** 评分器标识名称 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Utility Scorer")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     FString ScorerName = TEXT("DefaultScorer");
 
 private:
@@ -98,23 +98,23 @@ public:
     virtual bool IsScoreValid_Implementation(const FUtilityContext& Context) const override;
 
     /** 设置评分配置文件 */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI")
     void SetScoringProfile(const FUtilityProfile& NewProfile);
 
     /** 获取评分配置文件 */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|AI")
     const FUtilityProfile& GetScoringProfile() const { return ScoringProfile; }
 
     /** 清除评分缓存 */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI")
     void ClearCache();
 
     /** 获取缓存的评分结果（如果有效） */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|AI")
     float GetCachedScore() const { return CachedScore; }
 
     /** 检查缓存是否有效 */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|AI")
     bool IsCacheValid(const FUtilityContext& Context) const;
 
 protected:
@@ -126,11 +126,11 @@ protected:
 
 public:
     /** 调试：获取详细的评分信息 */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI|Debug")
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI|Debug")
     FString GetDebugScoreInfo(const FUtilityContext& Context) const;
 
     /** 调试：在屏幕上显示评分信息 */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI|Debug")
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI|Debug")
     void DisplayDebugScore(const FUtilityContext& Context, float DisplayDuration = 5.0f) const;
 };
 
@@ -148,51 +148,51 @@ public:
 
 protected:
     /** 注册的评分器列表 */
-    UPROPERTY(BlueprintReadOnly, Category = "Multi Utility Scorer")
+    UPROPERTY(BlueprintReadOnly, Category = "ElementalCombat|AI")
     TMap<FString, TScriptInterface<IUtilityScorer>> RegisteredScorers;
 
     /** 默认评分器名称 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Multi Utility Scorer")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     FString DefaultScorerName = TEXT("Default");
 
 public:
     /** 注册评分器 */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI")
     void RegisterScorer(const FString& Name, const TScriptInterface<IUtilityScorer>& Scorer);
 
     /** 注销评分器 */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI")
     void UnregisterScorer(const FString& Name);
 
     /** 获取指定评分器 */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|AI")
     TScriptInterface<IUtilityScorer> GetScorer(const FString& Name) const;
 
     /** 使用指定评分器计算分数 */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI")
     float CalculateScoreWithScorer(const FString& ScorerName, const FUtilityContext& Context) const;
 
     /** 使用默认评分器计算分数 */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI")
     float CalculateScore(const FUtilityContext& Context) const;
 
     /** 使用所有评分器计算分数并返回最高分 */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI")
     float CalculateBestScore(const FUtilityContext& Context, FString& OutBestScorerName) const;
 
     /** 获取所有注册的评分器名称 */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|AI")
     TArray<FString> GetRegisteredScorerNames() const;
 
     /** 检查是否有指定的评分器 */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|AI")
     bool HasScorer(const FString& Name) const;
 
     /** 设置默认评分器 */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI")
     void SetDefaultScorer(const FString& Name);
 
     /** 清除所有评分器的缓存 */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI")
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI")
     void ClearAllCaches();
 };

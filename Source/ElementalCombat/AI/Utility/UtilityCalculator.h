@@ -22,7 +22,7 @@ public:
      * @param Context 评分上下文
      * @return 计算出的评分结果
      */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI", CallInEditor)
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI", CallInEditor)
     static float CalculateUtilityScore(const FUtilityProfile& Profile, const FUtilityContext& Context);
 
     /**
@@ -31,7 +31,7 @@ public:
      * @param Context 评分上下文
      * @return 单项评分值
      */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI", CallInEditor)
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI", CallInEditor)
     static float CalculateConsiderationScore(const FUtilityConsideration& Consideration, const FUtilityContext& Context);
 
     /**
@@ -40,7 +40,7 @@ public:
      * @param InputValue 输入值
      * @return 输出值
      */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI", CallInEditor)
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI", CallInEditor)
     static float EvaluateResponseCurve(const FRuntimeFloatCurve& Curve, float InputValue);
 
     /**
@@ -50,7 +50,7 @@ public:
      * @param bUseMultiplicative 是否使用乘法组合
      * @return 最终组合评分
      */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI", CallInEditor)
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI", CallInEditor)
     static float CombineScores(const TArray<float>& Scores, const TArray<float>& Weights, bool bUseMultiplicative = false);
 
     /**
@@ -59,6 +59,6 @@ public:
      * @param OutErrorMessage 错误信息输出
      * @return 是否有效
      */
-    UFUNCTION(BlueprintCallable, Category = "Utility AI", CallInEditor)
+    UFUNCTION(BlueprintCallable, Category = "ElementalCombat|AI", CallInEditor)
     static bool ValidateUtilityProfile(const FUtilityProfile& Profile, FString& OutErrorMessage);
 };

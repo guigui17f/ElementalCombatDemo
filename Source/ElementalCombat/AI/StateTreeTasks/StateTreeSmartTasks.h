@@ -27,7 +27,7 @@ struct FStateTreeSmartAttackInstanceData : public FElementalStateTreeInstanceDat
     // 技能攻击功能已移除，因为EAIAttackType中没有Skill类型
 
     /** 最小决策间隔（秒，避免频繁切换） */
-    UPROPERTY(EditAnywhere, Category = "Attack Scoring", meta = (ClampMin = "0.1"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "0.1"))
     float MinDecisionInterval = 1.0f;
 
     // === 输出结果 ===
@@ -106,19 +106,19 @@ struct FStateTreeTacticalPositionInstanceData : public FElementalStateTreeInstan
     GENERATED_BODY()
 
     /** EQS位置查询模板 */
-    UPROPERTY(EditAnywhere, Category = "Position Selection")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     TObjectPtr<UEnvQuery> PositionQuery;
 
     /** 最小移动距离（避免微小移动） */
-    UPROPERTY(EditAnywhere, Category = "Position Selection", meta = (ClampMin = "0.0"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "0.0"))
     float MinMovementDistance = 100.0f;
 
     /** 位置重新评估间隔（秒） */
-    UPROPERTY(EditAnywhere, Category = "Position Selection", meta = (ClampMin = "0.5"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "0.5"))
     float ReevaluationInterval = 3.0f;
 
     /** 移动完成容差距离 */
-    UPROPERTY(EditAnywhere, Category = "Position Selection", meta = (ClampMin = "10.0"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "10.0"))
     float MovementTolerance = 50.0f;
 
     // === 输出结果 ===
@@ -204,19 +204,19 @@ struct FStateTreeElementalDecisionInstanceData : public FElementalStateTreeInsta
     GENERATED_BODY()
 
     /** 各元素类型的评分配置 */
-    UPROPERTY(EditAnywhere, Category = "Elemental Decision")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     TMap<EElementalType, FUtilityProfile> ElementalProfiles;
 
     /** 是否允许动态切换元素 */
-    UPROPERTY(EditAnywhere, Category = "Elemental Decision")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     bool bAllowElementSwitching = true;
 
     /** 元素切换冷却时间（秒） */
-    UPROPERTY(EditAnywhere, Category = "Elemental Decision", meta = (ClampMin = "0.0"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "0.0"))
     float ElementSwitchCooldown = 2.0f;
 
     /** 最小元素优势阈值（低于此值不切换） */
-    UPROPERTY(EditAnywhere, Category = "Elemental Decision", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "0.0", ClampMax = "1.0"))
     float MinElementAdvantageThreshold = 0.2f;
 
     // === 输出结果 ===

@@ -25,15 +25,15 @@ struct FStateTreeUniversalUtilityInstanceData : public FElementalStateTreeInstan
     float FinalScore = 0.0f;    /** 评分是否有效（输出） */    UPROPERTY(EditAnywhere, Category = "Output")    bool bScoreValid = false;    /** 各项评分细节（输出，调试用） */    UPROPERTY(EditAnywhere, Category = "Output")    float HealthScore = 0.0f;    UPROPERTY(EditAnywhere, Category = "Output")    float DistanceScore = 0.0f;    UPROPERTY(EditAnywhere, Category = "Output")    float ElementScore = 0.0f;    UPROPERTY(EditAnywhere, Category = "Output")    float ThreatScore = 0.0f;    UPROPERTY(EditAnywhere, Category = "Output")    float CooldownScore = 0.0f;    UPROPERTY(EditAnywhere, Category = "Output")    float TeamScore = 0.0f;
 
     /** 是否重新计算评分（每次进入状态时） */
-    UPROPERTY(EditAnywhere, Category = "Utility Scoring")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     bool bRecalculateOnEnter = true;
 
     /** 是否持续更新评分（Tick时） */
-    UPROPERTY(EditAnywhere, Category = "Utility Scoring")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     bool bContinuousUpdate = false;
 
     /** 持续更新间隔（秒） */
-    UPROPERTY(EditAnywhere, Category = "Utility Scoring", 
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", 
               meta = (EditCondition = "bContinuousUpdate", ClampMin = "0.1"))
     float UpdateInterval = 1.0f;
 
@@ -85,7 +85,7 @@ struct FStateTreeUtilityConsiderationInstanceData : public FElementalStateTreeIn
     GENERATED_BODY()
 
     /** 单个评分因素配置 */
-    UPROPERTY(EditAnywhere, Category = "Consideration")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     FUtilityConsideration Consideration;
 
     /** 计算出的单项评分（输出） */
@@ -101,7 +101,7 @@ struct FStateTreeUtilityConsiderationInstanceData : public FElementalStateTreeIn
     bool bScoreValid = false;
 
     /** 评分阈值（低于此值认为无效） */
-    UPROPERTY(EditAnywhere, Category = "Consideration", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "0.0", ClampMax = "1.0"))
     float ValidScoreThreshold = 0.1f;
 };
 
@@ -137,15 +137,15 @@ struct FStateTreeUtilityComparisonInstanceData : public FElementalStateTreeInsta
     GENERATED_BODY()
 
     /** 比较模式：使用相同配置但不同权重调整 */
-    UPROPERTY(EditAnywhere, Category = "Comparison")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     bool bUseWeightVariations = true;
 
     /** 权重变化A（相对于基础配置的调整） */
-    UPROPERTY(EditAnywhere, Category = "Comparison")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     TMap<EConsiderationType, float> WeightVariationA;
 
     /** 权重变化B（相对于基础配置的调整） */
-    UPROPERTY(EditAnywhere, Category = "Comparison")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     TMap<EConsiderationType, float> WeightVariationB;
 
     /** 评分A的结果（输出） */
@@ -206,11 +206,11 @@ struct FStateTreeDynamicUtilityInstanceData : public FElementalStateTreeInstance
 
 
     /** 权重调整映射 */
-    UPROPERTY(EditAnywhere, Category = "Dynamic Utility")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     TMap<EConsiderationType, float> WeightAdjustments;
 
     /** 是否基于当前状态动态调整权重 */
-    UPROPERTY(EditAnywhere, Category = "Dynamic Utility")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     bool bUseDynamicAdjustment = true;
 
     /** 调整后的评分结果（输出） */

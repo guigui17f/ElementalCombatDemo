@@ -21,23 +21,23 @@ struct FStateTreeEQSQueryInstanceData : public FElementalStateTreeInstanceDataBa
     GENERATED_BODY()
 
     /** EQS查询模板 */
-    UPROPERTY(EditAnywhere, Category = "EQS Query")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     TObjectPtr<UEnvQuery> QueryTemplate;
 
     /** 查询运行模式 */
-    UPROPERTY(EditAnywhere, Category = "EQS Query")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     TEnumAsByte<EEnvQueryRunMode::Type> RunMode = EEnvQueryRunMode::SingleResult;
 
     /** 最大查询结果数量 */
-    UPROPERTY(EditAnywhere, Category = "EQS Query", meta = (ClampMin = "1", ClampMax = "100"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "1", ClampMax = "100"))
     int32 MaxResults = 1;
 
     /** 是否异步执行查询 */
-    UPROPERTY(EditAnywhere, Category = "EQS Query")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     bool bRunAsync = true;
 
     /** 查询超时时间（秒） */
-    UPROPERTY(EditAnywhere, Category = "EQS Query", meta = (ClampMin = "0.1", ClampMax = "10.0"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "0.1", ClampMax = "10.0"))
     float QueryTimeout = 2.0f;
 
     // === 输出结果 ===
@@ -120,15 +120,15 @@ struct FStateTreeEQSUtilityInstanceData : public FElementalStateTreeInstanceData
     GENERATED_BODY()
 
     /** EQS查询模板 */
-    UPROPERTY(EditAnywhere, Category = "EQS Utility")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     TObjectPtr<UEnvQuery> QueryTemplate;
 
     /** 最小可接受评分 */
-    UPROPERTY(EditAnywhere, Category = "EQS Utility", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "0.0", ClampMax = "1.0"))
     float MinAcceptableScore = 0.3f;
 
     /** 最大考虑位置数量 */
-    UPROPERTY(EditAnywhere, Category = "EQS Utility", meta = (ClampMin = "1", ClampMax = "50"))
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI", meta = (ClampMin = "1", ClampMax = "50"))
     int32 MaxPositionsToEvaluate = 10;
 
     // === 输出结果 ===
@@ -191,15 +191,15 @@ struct FStateTreeEQSCacheInstanceData : public FElementalStateTreeInstanceDataBa
     GENERATED_BODY()
 
     /** 清除所有缓存 */
-    UPROPERTY(EditAnywhere, Category = "Cache Management")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     bool bClearAllCaches = false;
 
     /** 清除过期缓存 */
-    UPROPERTY(EditAnywhere, Category = "Cache Management")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     bool bClearExpiredCaches = true;
 
     /** 显示缓存统计信息 */
-    UPROPERTY(EditAnywhere, Category = "Cache Management")
+    UPROPERTY(EditAnywhere, Category = "ElementalCombat|AI")
     bool bShowCacheStats = false;
 
     /** 缓存统计信息（输出） */

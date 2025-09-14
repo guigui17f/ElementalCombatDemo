@@ -35,39 +35,39 @@ struct ELEMENTALCOMBAT_API FUtilityContext
     GENERATED_BODY()
 
     /** 执行评分的AI角色 */
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    UPROPERTY(BlueprintReadWrite, Category = "ElementalCombat|AI")
     TWeakObjectPtr<AElementalCombatEnemy> SelfActor;
 
     /** 目标角色（如果有的话） */
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    UPROPERTY(BlueprintReadWrite, Category = "ElementalCombat|AI")
     TWeakObjectPtr<AActor> TargetActor;
 
     /** 当前时间戳 */
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    UPROPERTY(BlueprintReadWrite, Category = "ElementalCombat|AI")
     float CurrentTime = 0.0f;
 
     /** 距离目标的距离 */
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    UPROPERTY(BlueprintReadWrite, Category = "ElementalCombat|AI")
     float DistanceToTarget = 0.0f;
 
     /** 自身健康度百分比 [0.0 - 1.0] */
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    UPROPERTY(BlueprintReadWrite, Category = "ElementalCombat|AI")
     float HealthPercent = 1.0f;
 
     /** 目标健康度百分比 [0.0 - 1.0] */
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    UPROPERTY(BlueprintReadWrite, Category = "ElementalCombat|AI")
     float TargetHealthPercent = 1.0f;
 
     /** 威胁等级 [0.0 - 1.0] */
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    UPROPERTY(BlueprintReadWrite, Category = "ElementalCombat|AI")
     float ThreatLevel = 0.0f;
 
     /** 元素优势值 [-1.0, 0.0, 1.0] */
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    UPROPERTY(BlueprintReadWrite, Category = "ElementalCombat|AI")
     float ElementAdvantage = 0.0f;
 
     /** 自定义数据映射 */
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    UPROPERTY(BlueprintReadWrite, Category = "ElementalCombat|AI")
     TMap<FString, float> CustomValues;
 
     FUtilityContext()
@@ -124,28 +124,28 @@ struct ELEMENTALCOMBAT_API FUtilityConsideration
     GENERATED_BODY()
 
     /** 评分类型 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Consideration")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     EConsiderationType ConsiderationType = EConsiderationType::Health;
 
     /** 自定义评分标识（当类型为Custom时使用） */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Consideration",
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI",
               meta = (EditCondition = "ConsiderationType == EConsiderationType::Custom"))
     FString CustomKey;
 
     /** 响应曲线 - 将输入值[0.0-1.0]映射到输出值[0.0-1.0] */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Consideration")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     FRuntimeFloatCurve ResponseCurve;
 
     /** 是否反转输入值（1.0 - input） */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Consideration")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     bool bInvertInput = false;
 
     /** 输入值乘数 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Consideration", meta = (ClampMin = "0.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI", meta = (ClampMin = "0.0"))
     float InputMultiplier = 1.0f;
 
     /** 输出值偏移 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Consideration", meta = (ClampMin = "-1.0", ClampMax = "1.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI", meta = (ClampMin = "-1.0", ClampMax = "1.0"))
     float OutputOffset = 0.0f;
 
     FUtilityConsideration()
@@ -176,35 +176,35 @@ struct ELEMENTALCOMBAT_API FUtilityProfile
     GENERATED_BODY()
 
     /** 配置文件名称 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Profile")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     FString ProfileName = TEXT("Default");
 
     /** 评分因素列表 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Profile")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     TArray<FUtilityConsideration> Considerations;
 
     /** 各项权重 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Profile")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     TMap<EConsiderationType, float> Weights;
 
     /** 组合方式：true=乘法，false=加法平均 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Profile")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     bool bUseMultiplicativeCombination = false;
 
     /** 最小分数阈值（低于此值的结果被视为无效） */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Profile", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI", meta = (ClampMin = "0.0", ClampMax = "1.0"))
     float MinScoreThreshold = 0.01f;
 
     /** 是否启用调试输出 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Profile")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     bool bEnableDebugOutput = false;
 
     /** AI类型标签 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Profile")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     TArray<FString> AITypeTags;
 
     /** 近战AI切换到远程攻击的距离阈值（单位：虚幻单位） */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Profile", meta = (ClampMin = "0.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI", meta = (ClampMin = "0.0"))
     float MeleeToRangedSwitchDistance = 300.0f;
 
     FUtilityProfile()
@@ -246,10 +246,10 @@ struct ELEMENTALCOMBAT_API FUtilityProfileTableRow : public FTableRowBase
     GENERATED_BODY()
 
     /** Utility配置文件 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Utility Profile")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     FUtilityProfile Profile;
 
     /** 描述信息 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Utility Profile")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|AI")
     FString Description;
 };
