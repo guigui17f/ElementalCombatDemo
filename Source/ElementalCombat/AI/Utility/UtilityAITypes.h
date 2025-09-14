@@ -199,6 +199,14 @@ struct ELEMENTALCOMBAT_API FUtilityProfile
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Profile")
     bool bEnableDebugOutput = false;
 
+    /** AI类型标签 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Profile")
+    TArray<FString> AITypeTags;
+
+    /** 近战AI切换到远程攻击的距离阈值（单位：虚幻单位） */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Profile", meta = (ClampMin = "0.0"))
+    float MeleeToRangedSwitchDistance = 300.0f;
+
     FUtilityProfile()
     {
         // 默认权重为1.0
@@ -244,8 +252,4 @@ struct ELEMENTALCOMBAT_API FUtilityProfileTableRow : public FTableRowBase
     /** 描述信息 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Utility Profile")
     FString Description;
-
-    /** 适用的AI类型标签 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Utility Profile")
-    TArray<FString> AITypeTags;
 };

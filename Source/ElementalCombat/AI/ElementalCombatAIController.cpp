@@ -99,6 +99,9 @@ FUtilityProfile AElementalCombatAIController::CreateDefaultTestProfile()
 	ElementConsideration.ResponseCurve.EditorCurveData.AddKey(0.0f, 0.0f);
 	ElementConsideration.ResponseCurve.EditorCurveData.AddKey(1.0f, 1.0f);
 	DefaultProfile.Considerations.Add(ElementConsideration);
-	
+
+	// 设置默认AI配置 - 不添加标签，将使用默认的近战AI行为
+	DefaultProfile.MeleeToRangedSwitchDistance = 300.0f;
+
 	return DefaultProfile;
 }

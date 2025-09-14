@@ -86,6 +86,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|AI")
 	float GetDistanceToTarget() const;
 
+	// 获取远程攻击范围
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|AI")
+	float GetRangedAttackRange() const { return RangedAttackRange; }
+
 	// 重写受击方法，移除ragdoll效果
 	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, 
 	                        AController* EventInstigator, AActor* DamageCauser) override;

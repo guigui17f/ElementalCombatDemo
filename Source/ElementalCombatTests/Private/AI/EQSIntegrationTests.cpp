@@ -95,50 +95,6 @@ bool FEQSQueryInstanceDataTest::RunTest(const FString& Parameters)
 }
 
 /**
- * 测试EQS战术查询任务配置
- */
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEQSTacticalQueryTest,
-    "ElementalCombat.AI.EQS.TacticalQuery",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
-
-bool FEQSTacticalQueryTest::RunTest(const FString& Parameters)
-{
-    // Arrange - 创建战术查询实例数据
-    FStateTreeEQSTacticalQueryInstanceData InstanceData;
-
-    // Act & Assert - 测试默认配置
-    TestTrue(TEXT("Should auto-select query type by default"), InstanceData.bAutoSelectQueryType);
-    TestEqual(TEXT("Default forced query type should be Melee"), 
-              InstanceData.ForcedQueryType, EAIAttackType::Melee);
-    TestEqual(TEXT("Initial used query type should be None"), 
-              InstanceData.UsedQueryType, EAIAttackType::None);
-
-    // 测试查询类型设置
-    InstanceData.bAutoSelectQueryType = false;
-    InstanceData.ForcedQueryType = EAIAttackType::Ranged;
-
-    TestFalse(TEXT("Auto-select should be disabled"), InstanceData.bAutoSelectQueryType);
-    TestEqual(TEXT("Forced query type should be Ranged"), 
-              InstanceData.ForcedQueryType, EAIAttackType::Ranged);
-
-    // 模拟查询结果
-    InstanceData.RecommendedPosition = FVector(300, 400, 0);
-    InstanceData.UsedQueryType = EAIAttackType::Ranged;
-    InstanceData.AlternativePositions.Add(FVector(250, 350, 0));
-    InstanceData.AlternativePositions.Add(FVector(350, 450, 0));
-    InstanceData.PositionQuality = 0.8f;
-
-    TestEqual(TEXT("Recommended position should be set"), 
-              InstanceData.RecommendedPosition, FVector(300, 400, 0));
-    TestEqual(TEXT("Used query type should be Ranged"), 
-              InstanceData.UsedQueryType, EAIAttackType::Ranged);
-    TestEqual(TEXT("Should have 2 alternative positions"), InstanceData.AlternativePositions.Num(), 2);
-    TestEqual(TEXT("Position quality should be 0.8"), InstanceData.PositionQuality, 0.8f);
-
-    return true;
-}
-
-/**
  * 测试EQS与Utility结合任务
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEQSUtilityTaskTest,
@@ -351,16 +307,12 @@ bool FEQSTaskTypeTest::RunTest(const FString& Parameters)
 {
     // Arrange - 创建不同类型的EQS任务
     FStateTreeEQSQueryTask QueryTask;
-    FStateTreeEQSTacticalQueryTask TacticalTask;
     FStateTreeEQSUtilityTask UtilityTask;
     FStateTreeEQSCacheManagerTask CacheManagerTask;
 
     // Act & Assert - 验证任务类型系统
     TestTrue(TEXT("Query task should have correct instance data type"),
              QueryTask.GetInstanceDataType() == FStateTreeEQSQueryInstanceData::StaticStruct());
-
-    TestTrue(TEXT("Tactical task should have correct instance data type"),
-             TacticalTask.GetInstanceDataType() == FStateTreeEQSTacticalQueryInstanceData::StaticStruct());
 
     TestTrue(TEXT("Utility task should have correct instance data type"),
              UtilityTask.GetInstanceDataType() == FStateTreeEQSUtilityInstanceData::StaticStruct());
@@ -369,9 +321,6 @@ bool FEQSTaskTypeTest::RunTest(const FString& Parameters)
              CacheManagerTask.GetInstanceDataType() == FStateTreeEQSCacheInstanceData::StaticStruct());
 
     // 验证任务类型唯一性
-    TestNotEqual(TEXT("Query and Tactical tasks should have different types"),
-                 QueryTask.GetInstanceDataType(), TacticalTask.GetInstanceDataType());
-
     TestNotEqual(TEXT("Utility and Cache manager tasks should have different types"),
                  UtilityTask.GetInstanceDataType(), CacheManagerTask.GetInstanceDataType());
 

@@ -37,29 +37,38 @@ EStateTreeRunStatus FStateTreeSmartAttackTask::EnterState(FStateTreeExecutionCon
 
     // 检查是否应该重新评估
     float CurrentTime = GetCurrentWorldTime(Context);
-    if (!ShouldReevaluate(InstanceData, CurrentTime))
+    bool bNeedsReevaluation = ShouldReevaluate(InstanceData, CurrentTime);
+
+    // 只在需要重新评估时才重新计算攻击选项
+    if (bNeedsReevaluation)
     {
-        return EStateTreeRunStatus::Succeeded;
+        // 评估攻击选项
+        if (!EvaluateAttackOptions(Context))
+        {
+            InstanceData.ErrorMessage = TEXT("Failed to evaluate attack options");
+            return EStateTreeRunStatus::Failed;
+        }
+
+        // 更新决策时间
+        InstanceData.LastDecisionTime = CurrentTime;
     }
 
-    // 评估攻击选项
-    if (!EvaluateAttackOptions(Context))
-    {
-        InstanceData.ErrorMessage = TEXT("Failed to evaluate attack options");
-        return EStateTreeRunStatus::Failed;
-    }
-
-    // 更新决策时间
-    InstanceData.LastDecisionTime = CurrentTime;
-
-    // 如果不应该攻击，成功完成但不执行攻击
+    // 检查是否有有效的攻击决策（无论是新的还是上次的）
     if (!InstanceData.bShouldAttack)
     {
+        // 如果没有有效的攻击决策，但这是首次评估，则失败
+        if (InstanceData.LastDecisionTime < 0.0f)
+        {
+            InstanceData.ErrorMessage = TEXT("No valid attack decision on first evaluation");
+            return EStateTreeRunStatus::Failed;
+        }
+
+        // 否则返回成功（保持不攻击的决策）
         InstanceData.bTaskCompleted = true;
         return EStateTreeRunStatus::Succeeded;
     }
 
-    // 执行选择的攻击
+    // 执行选择的攻击（基于当前有效的决策）
     if (!ExecuteSelectedAttack(Context))
     {
         InstanceData.ErrorMessage = TEXT("Attack execution failed");
@@ -84,7 +93,7 @@ void FStateTreeSmartAttackTask::ExitState(FStateTreeExecutionContext& Context, c
 bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext& Context) const
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-    
+
     // 从AIController获取配置
     AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.EnemyCharacter->GetController());
     if (!AIController)
@@ -93,55 +102,77 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
         InstanceData.ErrorMessage = TEXT("No ElementalCombatAIController found");
         return false;
     }
-    
+
     const FUtilityProfile& AIProfile = AIController->GetCurrentAIProfile();
-    
+
     // 清除之前的评分
     InstanceData.AttackTypeScores.Empty();
-    
+
     // 创建评分上下文
     FUtilityContext UtilityContext = CreateUtilityContext(Context);
-    
-    // 使用同一个AI配置评估不同攻击类型，让Utility配置完全控制评分
-    // 近战评分
-    FUtilityContext MeleeContext = UtilityContext;
-    float MeleeScore = CalculateUtilityScoreWithCache(AIProfile, MeleeContext);
-    InstanceData.AttackTypeScores.Add(EAIAttackType::Melee, MeleeScore);
+    float DistanceToTarget = UtilityContext.DistanceToTarget;
 
-    // 远程评分
-    FUtilityContext RangedContext = UtilityContext;
-    float RangedScore = CalculateUtilityScoreWithCache(AIProfile, RangedContext);
-    InstanceData.AttackTypeScores.Add(EAIAttackType::Ranged, RangedScore);
-    
-    // 选择最佳攻击类型
-    EAIAttackType BestAttackType = EAIAttackType::None;
-    float BestScore = 0.0f;
-    
-    if (MeleeScore > RangedScore)
+    // 检查AI类型标签
+    bool bIsRangedAI = AIProfile.AITypeTags.Contains(TEXT("Ranged"));
+    // 无标签或有Melee标签都视为近战AI
+    bool bIsMeleeAI = !bIsRangedAI; // 默认为近战AI
+
+    // 根据AI类型决定攻击策略
+    if (bIsRangedAI)
     {
-        BestAttackType = EAIAttackType::Melee;
-        BestScore = MeleeScore;
+        // 远程AI：总是倾向于远程攻击
+        InstanceData.SelectedAttackType = EAIAttackType::Ranged;
+        InstanceData.FinalScore = 1.0f;
+        InstanceData.bShouldAttack = true;
+        InstanceData.AttackTypeScores.Add(EAIAttackType::Ranged, 1.0f);
+        InstanceData.DecisionReason = TEXT("Ranged AI - Always prefer ranged attack");
     }
-    else if (RangedScore > 0.01f)
+    else // 默认近战AI逻辑（包括无标签和Melee标签）
     {
-        BestAttackType = EAIAttackType::Ranged;
-        BestScore = RangedScore;
+        // 近战AI的决策逻辑
+        float SwitchDistance = AIProfile.MeleeToRangedSwitchDistance;
+
+        if (DistanceToTarget <= SwitchDistance)
+        {
+            // 近距离：不攻击，交由后续位移逻辑处理
+            InstanceData.bShouldAttack = false;
+            InstanceData.SelectedAttackType = EAIAttackType::None;
+            InstanceData.FinalScore = 0.0f;
+            InstanceData.DecisionReason = FString::Printf(
+                TEXT("Melee AI - Too close (%.1f <= %.1f), waiting for movement"),
+                DistanceToTarget, SwitchDistance);
+        }
+        else
+        {
+            // 检查是否在远程攻击范围内
+            float RangedRange = InstanceData.EnemyCharacter->GetRangedAttackRange();
+            if (DistanceToTarget <= RangedRange)
+            {
+                // 远距离但在射程内：使用远程攻击
+                InstanceData.SelectedAttackType = EAIAttackType::Ranged;
+                InstanceData.FinalScore = 0.8f;
+                InstanceData.bShouldAttack = true;
+                InstanceData.AttackTypeScores.Add(EAIAttackType::Ranged, 0.8f);
+                InstanceData.DecisionReason = FString::Printf(
+                    TEXT("Melee AI - Using ranged at distance %.1f"),
+                    DistanceToTarget);
+            }
+            else
+            {
+                // 超出范围：不攻击
+                InstanceData.bShouldAttack = false;
+                InstanceData.SelectedAttackType = EAIAttackType::None;
+                InstanceData.FinalScore = 0.0f;
+                InstanceData.DecisionReason = TEXT("Melee AI - Target out of range");
+            }
+        }
     }
-    
-    // 更新实例数据
-    InstanceData.SelectedAttackType = BestAttackType;
-    InstanceData.FinalScore = BestScore;
-    InstanceData.bShouldAttack = (BestAttackType != EAIAttackType::None && BestScore > 0.01f);
-    InstanceData.DecisionReason = GenerateDecisionReason(InstanceData);
-    
+
     if (bEnableDebugOutput)
     {
-        FString TypeName = UEnum::GetValueAsString(BestAttackType);
-        LogDebug(FString::Printf(TEXT("SmartAttack: Selected %s, Score=%.3f, ShouldAttack=%s"), 
-                                *TypeName, BestScore,
-                                InstanceData.bShouldAttack ? TEXT("Yes") : TEXT("No")));
+        LogDebug(FString::Printf(TEXT("SmartAttack: %s"), *InstanceData.DecisionReason));
     }
-    
+
     return true;
 }
 
@@ -229,10 +260,11 @@ EStateTreeRunStatus FStateTreeTacticalPositionTask::EnterState(FStateTreeExecuti
         return EStateTreeRunStatus::Running;
     }
 
-    // 检查是否需要重新评估
+    // 检查是否需要重新评估位置
     if (!ShouldReevaluatePosition(InstanceData, CurrentTime))
     {
-        // 只有在不需要重新评估且没有在移动时，才返回成功
+        // 不需要重新评估且没有在移动时返回成功
+        // 这表示AI已达到理想位置或上次的位置决策仍然有效
         return EStateTreeRunStatus::Succeeded;
     }
 
@@ -584,103 +616,5 @@ bool FStateTreeElementalDecisionTask::SwitchToElement(EElementalType NewElement,
 FText FStateTreeElementalDecisionTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
 {
     return NSLOCTEXT("StateTreeEditor", "ElementalDecision", "Elemental Type Decision");
-}
-#endif
-
-// === FStateTreeMasterDecisionTask 实现 ===
-
-EStateTreeRunStatus FStateTreeMasterDecisionTask::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
-{
-    FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-
-    if (!InstanceData.EnemyCharacter)
-    {
-        LogDebug(TEXT("MasterDecisionTask: EnemyCharacter is null"));
-        InstanceData.ErrorMessage = TEXT("No EnemyCharacter found");
-        return EStateTreeRunStatus::Failed;
-    }
-
-    // 更新所有子决策系统
-    if (!UpdateAllDecisions(Context))
-    {
-        InstanceData.ErrorMessage = TEXT("Failed to update decisions");
-        return EStateTreeRunStatus::Failed;
-    }
-
-    // 计算综合决策优先级
-    CalculateDecisionPriorities(InstanceData);
-
-    // 执行最高优先级的行动
-    if (!ExecutePrimaryAction(Context))
-    {
-        InstanceData.ErrorMessage = TEXT("Failed to execute primary action");
-        return EStateTreeRunStatus::Failed;
-    }
-
-    InstanceData.bTaskCompleted = true;
-    return EStateTreeRunStatus::Succeeded;
-}
-
-EStateTreeRunStatus FStateTreeMasterDecisionTask::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
-{
-    FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-
-    float CurrentTime = GetCurrentWorldTime(Context);
-    if (ShouldUpdateDecisions(InstanceData, CurrentTime))
-    {
-        UpdateAllDecisions(Context);
-        CalculateDecisionPriorities(InstanceData);
-        InstanceData.LastDecisionUpdate = CurrentTime;
-    }
-
-    return EStateTreeRunStatus::Running;
-}
-
-void FStateTreeMasterDecisionTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
-{
-    // 清理逻辑
-}
-
-bool FStateTreeMasterDecisionTask::UpdateAllDecisions(FStateTreeExecutionContext& Context) const
-{
-    // 这里应该更新所有子决策系统
-    // 目前作为占位符返回成功
-    return true;
-}
-
-void FStateTreeMasterDecisionTask::CalculateDecisionPriorities(FInstanceDataType& InstanceData) const
-{
-    InstanceData.DecisionPriorities.Empty();
-    
-    // 基于权重和评分计算优先级
-    InstanceData.DecisionPriorities.Add(TEXT("Attack Decision"));
-    InstanceData.DecisionPriorities.Add(TEXT("Position Decision"));
-    InstanceData.DecisionPriorities.Add(TEXT("Element Decision"));
-    
-    InstanceData.CurrentPrimaryAction = InstanceData.DecisionPriorities.Num() > 0 ? 
-                                       InstanceData.DecisionPriorities[0] : TEXT("No Action");
-}
-
-bool FStateTreeMasterDecisionTask::ExecutePrimaryAction(FStateTreeExecutionContext& Context) const
-{
-    const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-    
-    if (bEnableDebugOutput)
-    {
-        LogDebug(FString::Printf(TEXT("MasterDecision: Executing %s"), *InstanceData.CurrentPrimaryAction));
-    }
-    
-    return true;
-}
-
-bool FStateTreeMasterDecisionTask::ShouldUpdateDecisions(const FInstanceDataType& InstanceData, float CurrentTime) const
-{
-    return (CurrentTime - InstanceData.LastDecisionUpdate) >= InstanceData.DecisionUpdateInterval;
-}
-
-#if WITH_EDITOR
-FText FStateTreeMasterDecisionTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
-{
-    return NSLOCTEXT("StateTreeEditor", "MasterDecision", "Master Decision Coordinator");
 }
 #endif
