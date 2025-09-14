@@ -44,6 +44,6 @@ EStateTreeRunStatus FStateTreePlayerInfoExtendedTask::Tick(FStateTreeExecutionCo
 #if WITH_EDITOR
 FText FStateTreePlayerInfoExtendedTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting /*= EStateTreeNodeFormatting::Text*/) const
 {
-    return FText::FromString(TEXT("Get Player Info Extended"));
+    return FText::FromString(TEXT("获取玩家信息扩展"));
 }
 #endif // WITH_EDITOR

@@ -60,7 +60,7 @@ float FElementalStateTreeTaskBase::CalculateUtilityScoreWithCache(const FUtility
         {
             if (bEnableDebugOutput)
             {
-                LogDebug(FString::Printf(TEXT("Using cached Utility score: %.3f"), *CachedScore));
+                LogDebug(FString::Printf(TEXT("使用缓存的效用评分：%.3f"), *CachedScore));
             }
             return *CachedScore;
         }
@@ -73,7 +73,7 @@ float FElementalStateTreeTaskBase::CalculateUtilityScoreWithCache(const FUtility
 
     if (bEnableDebugOutput)
     {
-        LogDebug(FString::Printf(TEXT("Calculated new Utility score: %.3f"), NewScore));
+        LogDebug(FString::Printf(TEXT("计算新的效用评分：%.3f"), NewScore));
     }
 
     return NewScore;
@@ -96,21 +96,21 @@ void FElementalStateTreeTaskBase::ExecuteEQSQuery(UEnvQuery* QueryTemplate, cons
 {
     if (!QueryTemplate)
     {
-        LogDebug(TEXT("ExecuteEQSQuery: QueryTemplate is null"));
+        LogDebug(TEXT("执行EQS查询：查询模板为空"));
         return;
     }
 
     AAIController* Controller = GetAIController(Context);
     if (!Controller)
     {
-        LogDebug(TEXT("ExecuteEQSQuery: No AI Controller found"));
+        LogDebug(TEXT("执行EQS查询：未找到AI控制器"));
         return;
     }
 
     UWorld* World = Controller->GetWorld();
     if (!World)
     {
-        LogDebug(TEXT("ExecuteEQSQuery: No World found"));
+        LogDebug(TEXT("执行EQS查询：未找到世界"));
         return;
     }
 
@@ -118,20 +118,20 @@ void FElementalStateTreeTaskBase::ExecuteEQSQuery(UEnvQuery* QueryTemplate, cons
     UEnvQueryManager* EQSManager = UEnvQueryManager::GetCurrent(World);
     if (!EQSManager)
     {
-        LogDebug(TEXT("ExecuteEQSQuery: No EQS Manager found"));
+        LogDebug(TEXT("执行EQS查询：未找到EQS管理器"));
         return;
     }
 
     APawn* QueryPawn = Controller->GetPawn();
     if (!QueryPawn)
     {
-        LogDebug(TEXT("ExecuteEQSQuery: No Pawn found"));
+        LogDebug(TEXT("执行EQS查询：未找到Pawn"));
         return;
     }
 
     if (bEnableDebugOutput)
     {
-        LogDebug(FString::Printf(TEXT("Executing EQS Query: %s"), *QueryTemplate->GetName()));
+        LogDebug(FString::Printf(TEXT("正在执行EQS查询：%s"), *QueryTemplate->GetName()));
     }
 
     // 创建并执行EQS查询
@@ -148,7 +148,7 @@ void FElementalStateTreeTaskBase::ExecuteEQSQuery(UEnvQuery* QueryTemplate, cons
 
     if (bEnableDebugOutput)
     {
-        LogDebug(FString::Printf(TEXT("EQS Query started with ID: %d"), QueryID));
+        LogDebug(FString::Printf(TEXT("EQS查询已启动，ID：%d"), QueryID));
     }
 }
 
@@ -172,7 +172,7 @@ bool FElementalStateTreeTaskBase::ExecuteEQSQueryWithCache(UEnvQuery* QueryTempl
 
         if (bEnableDebugOutput)
         {
-            LogDebug(FString::Printf(TEXT("Using cached EQS result: %d locations"), OutLocations.Num()));
+            LogDebug(FString::Printf(TEXT("使用缓存的EQS结果：%d 个位置"), OutLocations.Num()));
         }
 
         return Cache.bIsValid;
@@ -182,28 +182,28 @@ bool FElementalStateTreeTaskBase::ExecuteEQSQueryWithCache(UEnvQuery* QueryTempl
     AAIController* Controller = GetAIController(Context);
     if (!Controller)
     {
-        LogDebug(TEXT("ExecuteEQSQueryWithCache: No AI Controller found"));
+        LogDebug(TEXT("执行EQS查询缓存：未找到AI控制器"));
         return false;
     }
 
     UWorld* World = Controller->GetWorld();
     if (!World)
     {
-        LogDebug(TEXT("ExecuteEQSQueryWithCache: No World found"));
+        LogDebug(TEXT("执行EQS查询缓存：未找到世界"));
         return false;
     }
 
     UEnvQueryManager* EQSManager = UEnvQueryManager::GetCurrent(World);
     if (!EQSManager)
     {
-        LogDebug(TEXT("ExecuteEQSQueryWithCache: No EQS Manager found"));
+        LogDebug(TEXT("执行EQS查询缓存：未找到EQS管理器"));
         return false;
     }
 
     APawn* QueryPawn = Controller->GetPawn();
     if (!QueryPawn)
     {
-        LogDebug(TEXT("ExecuteEQSQueryWithCache: No Pawn found"));
+        LogDebug(TEXT("执行EQS查询缓存：未找到Pawn"));
         return false;
     }
 
@@ -231,7 +231,7 @@ bool FElementalStateTreeTaskBase::ExecuteEQSQueryWithCache(UEnvQuery* QueryTempl
 
             if (bEnableDebugOutput)
             {
-                LogDebug(FString::Printf(TEXT("EQS Query completed: %d locations found"), OutLocations.Num()));
+                LogDebug(FString::Printf(TEXT("EQS查询完成：找到 %d 个位置"), OutLocations.Num()));
             }
         }
     }
@@ -239,7 +239,7 @@ bool FElementalStateTreeTaskBase::ExecuteEQSQueryWithCache(UEnvQuery* QueryTempl
     {
         if (bEnableDebugOutput)
         {
-            LogDebug(TEXT("EQS Query failed or returned no results"));
+            LogDebug(TEXT("EQS查询失败或无结果"));
         }
     }
 
@@ -454,7 +454,7 @@ void FElementalStateTreeTaskBase::ClearEQSCache() const
     EQSCache.Empty();
     if (bEnableDebugOutput)
     {
-        LogDebug(TEXT("EQS Cache cleared"));
+        LogDebug(TEXT("EQS缓存已清理"));
     }
 }
 
@@ -464,7 +464,7 @@ void FElementalStateTreeTaskBase::ClearUtilityCache() const
     UtilityCacheTimestamps.Empty();
     if (bEnableDebugOutput)
     {
-        LogDebug(TEXT("Utility Cache cleared"));
+        LogDebug(TEXT("效用缓存已清理"));
     }
 }
 
@@ -501,7 +501,7 @@ void FElementalStateTreeTaskBase::ClearExpiredCaches(float CurrentTime) const
 
     if (bEnableDebugOutput && (ExpiredEQSKeys.Num() > 0 || ExpiredUtilityKeys.Num() > 0))
     {
-        LogDebug(FString::Printf(TEXT("Cleared %d expired EQS caches and %d expired Utility caches"), 
+        LogDebug(FString::Printf(TEXT("已清理 %d 个过期EQS缓存和 %d 个过期效用缓存"),
                                 ExpiredEQSKeys.Num(), ExpiredUtilityKeys.Num()));
     }
 }
@@ -541,16 +541,16 @@ void FElementalStateTreeTaskBase::OnEQSQueryCompleted(TSharedPtr<FEnvQueryResult
             {
                 TArray<FVector> ResultLocations;
                 QueryResult->GetAllAsLocations(ResultLocations);
-                LogDebug(FString::Printf(TEXT("EQS Query completed successfully: %d results"), ResultLocations.Num()));
+                LogDebug(FString::Printf(TEXT("EQS查询成功完成：%d 个结果"), ResultLocations.Num()));
             }
             else
             {
-                LogDebug(TEXT("EQS Query completed but failed"));
+                LogDebug(TEXT("EQS查询已完成但失败"));
             }
         }
         else
         {
-            LogDebug(TEXT("EQS Query completed with invalid result"));
+            LogDebug(TEXT("EQS查询完成但结果无效"));
         }
     }
 

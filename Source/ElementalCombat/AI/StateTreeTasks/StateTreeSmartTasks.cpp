@@ -15,22 +15,22 @@ EStateTreeRunStatus FStateTreeSmartAttackTask::EnterState(FStateTreeExecutionCon
 
     if (!InstanceData.EnemyCharacter)
     {
-        LogDebug(TEXT("SmartAttackTask: EnemyCharacter is null"));
-        InstanceData.ErrorMessage = TEXT("No EnemyCharacter found");
+        LogDebug(TEXT("智能攻击任务：敌人角色为空"));
+        InstanceData.ErrorMessage = TEXT("未找到敌人角色");
         return EStateTreeRunStatus::Failed;
     }
 
     if (!InstanceData.TargetActor)
     {
-        LogDebug(TEXT("SmartAttackTask: TargetActor is null"));
-        InstanceData.ErrorMessage = TEXT("No valid target found");
+        LogDebug(TEXT("智能攻击任务：目标角色为空"));
+        InstanceData.ErrorMessage = TEXT("未找到有效目标");
         return EStateTreeRunStatus::Failed;
     }
 
     // 如果正在攻击，直接返回成功避免重复触发
     if (InstanceData.EnemyCharacter->IsAttacking())
     {
-        LogDebug(TEXT("SmartAttackTask: Character is already attacking, task succeeded"));
+        LogDebug(TEXT("智能攻击任务：角色已在攻击中，任务成功"));
         InstanceData.bTaskCompleted = true;
         return EStateTreeRunStatus::Succeeded;
     }
@@ -45,7 +45,7 @@ EStateTreeRunStatus FStateTreeSmartAttackTask::EnterState(FStateTreeExecutionCon
         // 评估攻击选项
         if (!EvaluateAttackOptions(Context))
         {
-            InstanceData.ErrorMessage = TEXT("Failed to evaluate attack options");
+            InstanceData.ErrorMessage = TEXT("评估攻击选项失败");
             return EStateTreeRunStatus::Failed;
         }
 
@@ -59,7 +59,7 @@ EStateTreeRunStatus FStateTreeSmartAttackTask::EnterState(FStateTreeExecutionCon
         // 如果没有有效的攻击决策，但这是首次评估，则失败
         if (InstanceData.LastDecisionTime < 0.0f)
         {
-            InstanceData.ErrorMessage = TEXT("No valid attack decision on first evaluation");
+            InstanceData.ErrorMessage = TEXT("首次评估时无有效攻击决策");
             return EStateTreeRunStatus::Failed;
         }
 
@@ -71,7 +71,7 @@ EStateTreeRunStatus FStateTreeSmartAttackTask::EnterState(FStateTreeExecutionCon
     // 执行选择的攻击（基于当前有效的决策）
     if (!ExecuteSelectedAttack(Context))
     {
-        InstanceData.ErrorMessage = TEXT("Attack execution failed");
+        InstanceData.ErrorMessage = TEXT("攻击执行失败");
         return EStateTreeRunStatus::Failed;
     }
 
@@ -98,8 +98,8 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
     AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.EnemyCharacter->GetController());
     if (!AIController)
     {
-        LogDebug(TEXT("SmartAttackTask: AIController is null or not ElementalCombatAIController"));
-        InstanceData.ErrorMessage = TEXT("No ElementalCombatAIController found");
+        LogDebug(TEXT("智能攻击任务：AI控制器为空或不是元素战斗AI控制器"));
+        InstanceData.ErrorMessage = TEXT("未找到元素战斗AI控制器");
         return false;
     }
 
@@ -125,7 +125,7 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
         InstanceData.FinalScore = 1.0f;
         InstanceData.bShouldAttack = true;
         InstanceData.AttackTypeScores.Add(EAIAttackType::Ranged, 1.0f);
-        InstanceData.DecisionReason = TEXT("Ranged AI - Always prefer ranged attack");
+        InstanceData.DecisionReason = TEXT("远程AI - 始终倾向远程攻击");
     }
     else // 默认近战AI逻辑（包括无标签和Melee标签）
     {
@@ -139,7 +139,7 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
             InstanceData.SelectedAttackType = EAIAttackType::None;
             InstanceData.FinalScore = 0.0f;
             InstanceData.DecisionReason = FString::Printf(
-                TEXT("Melee AI - Too close (%.1f <= %.1f), waiting for movement"),
+                TEXT("近战AI - 距离过近 (%.1f <= %.1f)，等待移动"),
                 DistanceToTarget, SwitchDistance);
         }
         else
@@ -154,7 +154,7 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
                 InstanceData.bShouldAttack = true;
                 InstanceData.AttackTypeScores.Add(EAIAttackType::Ranged, 0.8f);
                 InstanceData.DecisionReason = FString::Printf(
-                    TEXT("Melee AI - Using ranged at distance %.1f"),
+                    TEXT("近战AI - 在距离 %.1f 使用远程攻击"),
                     DistanceToTarget);
             }
             else
@@ -163,14 +163,14 @@ bool FStateTreeSmartAttackTask::EvaluateAttackOptions(FStateTreeExecutionContext
                 InstanceData.bShouldAttack = false;
                 InstanceData.SelectedAttackType = EAIAttackType::None;
                 InstanceData.FinalScore = 0.0f;
-                InstanceData.DecisionReason = TEXT("Melee AI - Target out of range");
+                InstanceData.DecisionReason = TEXT("近战AI - 目标超出范围");
             }
         }
     }
 
     if (bEnableDebugOutput)
     {
-        LogDebug(FString::Printf(TEXT("SmartAttack: %s"), *InstanceData.DecisionReason));
+        LogDebug(FString::Printf(TEXT("智能攻击：%s"), *InstanceData.DecisionReason));
     }
 
     return true;
@@ -188,7 +188,7 @@ bool FStateTreeSmartAttackTask::ExecuteSelectedAttack(FStateTreeExecutionContext
     // 检查是否正在攻击，避免重复攻击
     if (InstanceData.EnemyCharacter->IsAttacking())
     {
-        LogDebug(TEXT("SmartAttackTask: Character is already attacking, skipping execution"));
+        LogDebug(TEXT("智能攻击任务：角色已在攻击中，跳过执行"));
         return true; // 返回true避免任务失败
     }
 
@@ -224,18 +224,18 @@ FString FStateTreeSmartAttackTask::GenerateDecisionReason(const FInstanceDataTyp
 {
     if (!InstanceData.bShouldAttack)
     {
-        return TEXT("No valid attack option available");
+        return TEXT("无有效攻击选项");
     }
     
     FString TypeName = UEnum::GetValueAsString(InstanceData.SelectedAttackType);
-    return FString::Printf(TEXT("Selected %s attack (Score: %.2f)"), 
+    return FString::Printf(TEXT("选择 %s 攻击（评分：%.2f）"), 
                           *TypeName, InstanceData.FinalScore);
 }
 
 #if WITH_EDITOR
 FText FStateTreeSmartAttackTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
 {
-    return NSLOCTEXT("StateTreeEditor", "SmartAttack", "Smart Attack Selection");
+    return NSLOCTEXT("StateTreeEditor", "SmartAttack", "智能攻击选择");
 }
 #endif
 
@@ -247,8 +247,8 @@ EStateTreeRunStatus FStateTreeTacticalPositionTask::EnterState(FStateTreeExecuti
 
     if (!InstanceData.EnemyCharacter)
     {
-        LogDebug(TEXT("TacticalPositionTask: EnemyCharacter is null"));
-        InstanceData.ErrorMessage = TEXT("No EnemyCharacter found");
+        LogDebug(TEXT("战术位置任务：敌人角色为空"));
+        InstanceData.ErrorMessage = TEXT("未找到敌人角色");
         return EStateTreeRunStatus::Failed;
     }
 
@@ -271,7 +271,7 @@ EStateTreeRunStatus FStateTreeTacticalPositionTask::EnterState(FStateTreeExecuti
     // 评估并选择最佳位置
     if (!EvaluateAndSelectPosition(Context))
     {
-        InstanceData.ErrorMessage = TEXT("Failed to find suitable position");
+        InstanceData.ErrorMessage = TEXT("未能找到合适位置");
         return EStateTreeRunStatus::Failed;
     }
 
@@ -281,7 +281,7 @@ EStateTreeRunStatus FStateTreeTacticalPositionTask::EnterState(FStateTreeExecuti
     // 开始移动到选择的位置
     if (!MoveToSelectedPosition(Context))
     {
-        InstanceData.ErrorMessage = TEXT("Failed to start movement");
+        InstanceData.ErrorMessage = TEXT("无法开始移动");
         return EStateTreeRunStatus::Failed;
     }
 
@@ -330,7 +330,7 @@ bool FStateTreeTacticalPositionTask::EvaluateAndSelectPosition(FStateTreeExecuti
     {
         if (bEnableDebugOutput)
         {
-            LogDebug(TEXT("TacticalPosition: No PositionQuery configured, using fallback logic"));
+            LogDebug(TEXT("战术位置：未配置位置查询，使用备用逻辑"));
         }
 
         // 回退到简化逻辑
@@ -404,7 +404,7 @@ bool FStateTreeTacticalPositionTask::EvaluateAndSelectPosition(FStateTreeExecuti
 
         if (bEnableDebugOutput)
         {
-            LogDebug(FString::Printf(TEXT("TacticalPosition: EQS found %d positions, selected (%.1f,%.1f,%.1f), Score=%.3f"),
+            LogDebug(FString::Printf(TEXT("战术位置：EQS找到 %d 个位置，选中 (%.1f,%.1f,%.1f)，评分=%.3f"),
                                     CandidatePositions.Num(),
                                     BestTacticalPosition.X, BestTacticalPosition.Y, BestTacticalPosition.Z,
                                     BestScore));
@@ -416,7 +416,7 @@ bool FStateTreeTacticalPositionTask::EvaluateAndSelectPosition(FStateTreeExecuti
     {
         if (bEnableDebugOutput)
         {
-            LogDebug(TEXT("TacticalPosition: EQS query failed"));
+            LogDebug(TEXT("战术位置：EQS查询失败"));
         }
 
         InstanceData.FinalScore = 0.0f;
@@ -489,7 +489,7 @@ bool FStateTreeTacticalPositionTask::ShouldReevaluatePosition(const FInstanceDat
 #if WITH_EDITOR
 FText FStateTreeTacticalPositionTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
 {
-    return NSLOCTEXT("StateTreeEditor", "TacticalPosition", "Tactical Position Selection");
+    return NSLOCTEXT("StateTreeEditor", "TacticalPosition", "战术位置选择");
 }
 #endif
 
@@ -501,15 +501,15 @@ EStateTreeRunStatus FStateTreeElementalDecisionTask::EnterState(FStateTreeExecut
 
     if (!InstanceData.EnemyCharacter)
     {
-        LogDebug(TEXT("ElementalDecisionTask: EnemyCharacter is null"));
-        InstanceData.ErrorMessage = TEXT("No EnemyCharacter found");
+        LogDebug(TEXT("元素决策任务：敌人角色为空"));
+        InstanceData.ErrorMessage = TEXT("未找到敌人角色");
         return EStateTreeRunStatus::Failed;
     }
 
     // 评估元素选项
     if (!EvaluateElementalOptions(Context))
     {
-        InstanceData.ErrorMessage = TEXT("Failed to evaluate elemental options");
+        InstanceData.ErrorMessage = TEXT("评估元素选项失败");
         return EStateTreeRunStatus::Failed;
     }
 
@@ -521,7 +521,7 @@ EStateTreeRunStatus FStateTreeElementalDecisionTask::EnterState(FStateTreeExecut
         {
             if (!SwitchToElement(InstanceData.RecommendedElement, Context))
             {
-                InstanceData.ErrorMessage = TEXT("Failed to switch element");
+                InstanceData.ErrorMessage = TEXT("切换元素失败");
                 return EStateTreeRunStatus::Failed;
             }
         }
@@ -579,9 +579,9 @@ bool FStateTreeElementalDecisionTask::EvaluateElementalOptions(FStateTreeExecuti
     if (bEnableDebugOutput)
     {
         FString ElementName = UEnum::GetValueAsString(BestElement);
-        LogDebug(FString::Printf(TEXT("ElementalDecision: Recommended %s, Score=%.3f, ShouldSwitch=%s"), 
+        LogDebug(FString::Printf(TEXT("元素决策：推荐 %s，评分=%.3f，应否切换=%s"),
                                 *ElementName, BestScore,
-                                InstanceData.bShouldSwitchElement ? TEXT("Yes") : TEXT("No")));
+                                InstanceData.bShouldSwitchElement ? TEXT("是") : TEXT("否")));
     }
     
     return true;
@@ -606,7 +606,7 @@ bool FStateTreeElementalDecisionTask::SwitchToElement(EElementalType NewElement,
     if (bEnableDebugOutput)
     {
         FString ElementName = UEnum::GetValueAsString(NewElement);
-        LogDebug(FString::Printf(TEXT("ElementalDecision: Switched to %s"), *ElementName));
+        LogDebug(FString::Printf(TEXT("元素决策：切换到 %s"), *ElementName));
     }
     
     return true;
@@ -615,6 +615,6 @@ bool FStateTreeElementalDecisionTask::SwitchToElement(EElementalType NewElement,
 #if WITH_EDITOR
 FText FStateTreeElementalDecisionTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
 {
-    return NSLOCTEXT("StateTreeEditor", "ElementalDecision", "Elemental Type Decision");
+    return NSLOCTEXT("StateTreeEditor", "ElementalDecision", "元素类型决策");
 }
 #endif

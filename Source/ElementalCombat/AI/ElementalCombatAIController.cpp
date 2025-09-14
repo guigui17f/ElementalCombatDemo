@@ -25,12 +25,12 @@ void AElementalCombatAIController::OnPossess(APawn* InPawn)
 		UE_LOG(LogTemp, Error, TEXT("StateTree组件未找到！"));
 	}
 
-	// Cache reference to the elemental combat enemy
+	// 缓存元素战斗敌人引用
 	ElementalCombatEnemy = Cast<AElementalCombatEnemy>(InPawn);
 	
 	if (ElementalCombatEnemy)
 	{
-		UE_LOG(LogTemp, Log, TEXT("ElementalCombatAIController: Possessed ElementalCombatEnemy %s"), *ElementalCombatEnemy->GetName());
+		UE_LOG(LogTemp, Log, TEXT("元素战斗AI控制器：已控制元素战斗敌人 %s"), *ElementalCombatEnemy->GetName());
 		
 		// 从GameInstance随机获取AI配置
 		if (UElementalCombatGameInstance* GameInstance = Cast<UElementalCombatGameInstance>(GetWorld()->GetGameInstance()))
@@ -47,13 +47,13 @@ void AElementalCombatAIController::OnPossess(APawn* InPawn)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ElementalCombatAIController: Possessed pawn is not an ElementalCombatEnemy"));
+		UE_LOG(LogTemp, Warning, TEXT("元素战斗AI控制器：被控制的Pawn不是元素战斗敌人"));
 	}
 }
 
 void AElementalCombatAIController::OnUnPossess()
 {
-	// Clear references
+	// 清理引用
 	ElementalCombatEnemy = nullptr;
 
 	Super::OnUnPossess();

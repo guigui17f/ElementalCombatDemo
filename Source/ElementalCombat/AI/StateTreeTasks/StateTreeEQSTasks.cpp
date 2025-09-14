@@ -7,29 +7,29 @@
 #include "AI/ElementalCombatAIController.h"
 #include "Engine/World.h"
 
-// === FStateTreeEQSQueryTask Implementation ===
+// === FStateTreeEQSQueryTask 实现 ===
 
 EStateTreeRunStatus FStateTreeEQSQueryTask::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
     
-    // Validate query template
+    // 验证查询模板
     if (!InstanceData.QueryTemplate)
     {
         InstanceData.bQuerySucceeded = false;
-        InstanceData.QueryError = TEXT("No query template specified");
+        InstanceData.QueryError = TEXT("未指定查询模板");
         return EStateTreeRunStatus::Failed;
     }
 
-    // Start EQS query
+    // 开始EQS查询
     if (!StartEQSQuery(Context))
     {
         InstanceData.bQuerySucceeded = false;
-        InstanceData.QueryError = TEXT("Failed to start EQS query");
+        InstanceData.QueryError = TEXT("启动EQS查询失败");
         return EStateTreeRunStatus::Failed;
     }
 
-    LogDebug(TEXT("EQSQuery: Started query"));
+    LogDebug(TEXT("EQS查询：开始查询"));
     return InstanceData.bRunAsync ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
@@ -42,17 +42,17 @@ EStateTreeRunStatus FStateTreeEQSQueryTask::Tick(FStateTreeExecutionContext& Con
         return EStateTreeRunStatus::Succeeded;
     }
 
-    // Check for timeout using simplified approach  
+    // 使用简化方法检查超时
     if (InstanceData.QueryStartTime > 0 && 
         FPlatformTime::Seconds() - InstanceData.QueryStartTime > InstanceData.QueryTimeout)
     {
         InstanceData.bQuerySucceeded = false;
-        InstanceData.QueryError = TEXT("Query timed out");
+        InstanceData.QueryError = TEXT("查询超时");
         InstanceData.bIsQueryRunning = false;
         return EStateTreeRunStatus::Failed;
     }
 
-    // Check query completion
+    // 检查查询完成
     if (CheckQueryCompletion(Context))
     {
         InstanceData.bIsQueryRunning = false;
@@ -81,28 +81,28 @@ bool FStateTreeEQSQueryTask::StartEQSQuery(FStateTreeExecutionContext& Context) 
     // 检查是否有查询模板
     if (!InstanceData.QueryTemplate)
     {
-        LogDebug(TEXT("StartEQSQuery: No QueryTemplate specified"));
+        LogDebug(TEXT("开始EQS查询：未指定查询模板"));
         return false;
     }
 
     UWorld* World = AIController->GetWorld();
     if (!World)
     {
-        LogDebug(TEXT("StartEQSQuery: No World found"));
+        LogDebug(TEXT("开始EQS查询：未找到世界"));
         return false;
     }
 
     UEnvQueryManager* EQSManager = UEnvQueryManager::GetCurrent(World);
     if (!EQSManager)
     {
-        LogDebug(TEXT("StartEQSQuery: No EQS Manager found"));
+        LogDebug(TEXT("开始EQS查询：未找到EQS管理器"));
         return false;
     }
 
     APawn* QueryPawn = AIController->GetPawn();
     if (!QueryPawn)
     {
-        LogDebug(TEXT("StartEQSQuery: No Pawn found"));
+        LogDebug(TEXT("开始EQS查询：未找到Pawn"));
         return false;
     }
 
@@ -126,7 +126,7 @@ bool FStateTreeEQSQueryTask::StartEQSQuery(FStateTreeExecutionContext& Context) 
 
         if (bEnableDebugOutput)
         {
-            LogDebug(FString::Printf(TEXT("EQS Async Query started with ID: %d"), InstanceData.QueryRequestID));
+            LogDebug(FString::Printf(TEXT("EQS异步查询启动，ID: %d"), InstanceData.QueryRequestID));
         }
     }
     else
@@ -145,7 +145,7 @@ bool FStateTreeEQSQueryTask::StartEQSQuery(FStateTreeExecutionContext& Context) 
 
         if (bEnableDebugOutput)
         {
-            LogDebug(FString::Printf(TEXT("EQS Sync Query completed: %d results"), QueryResults.Num()));
+            LogDebug(FString::Printf(TEXT("EQS同步查询完成：%d 个结果"), QueryResults.Num()));
         }
     }
 
@@ -170,7 +170,7 @@ void FStateTreeEQSQueryTask::ProcessQueryResults(const TArray<FVector>& Location
     }
     else
     {
-        InstanceData.QueryError = TEXT("No valid locations found");
+        InstanceData.QueryError = TEXT("未找到有效位置");
     }
 }
 
@@ -180,7 +180,7 @@ void FStateTreeEQSQueryTask::OnEQSQueryComplete(TSharedPtr<FEnvQueryResult> Quer
     {
         if (bEnableDebugOutput)
         {
-            LogDebug(TEXT("OnEQSQueryComplete: QueryResult is invalid"));
+            LogDebug(TEXT("EQS查询完成：查询结果无效"));
         }
         return;
     }
@@ -193,14 +193,14 @@ void FStateTreeEQSQueryTask::OnEQSQueryComplete(TSharedPtr<FEnvQueryResult> Quer
 
         if (bEnableDebugOutput)
         {
-            LogDebug(FString::Printf(TEXT("EQS Query completed successfully: %d results"), QueryResults.Num()));
+            LogDebug(FString::Printf(TEXT("EQS查询成功完成：%d 个结果"), QueryResults.Num()));
         }
     }
     else
     {
         if (bEnableDebugOutput)
         {
-            LogDebug(TEXT("EQS Query failed"));
+            LogDebug(TEXT("EQS查询失败"));
         }
     }
 
@@ -211,11 +211,11 @@ void FStateTreeEQSQueryTask::OnEQSQueryComplete(TSharedPtr<FEnvQueryResult> Quer
 #if WITH_EDITOR
 FText FStateTreeEQSQueryTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
 {
-    return FText::FromString(TEXT("Execute EQS Query"));
+    return FText::FromString(TEXT("执行EQS查询"));
 }
 #endif
 
-// === FStateTreeEQSUtilityTask Implementation ===
+// === FStateTreeEQSUtilityTask 实现 ===
 
 EStateTreeRunStatus FStateTreeEQSUtilityTask::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
@@ -251,7 +251,7 @@ EStateTreeRunStatus FStateTreeEQSUtilityTask::EnterState(FStateTreeExecutionCont
 
         if (bEnableDebugOutput)
         {
-            LogDebug(FString::Printf(TEXT("EQSUtility: Processing %d positions (from %d total)"),
+            LogDebug(FString::Printf(TEXT("EQS效用：处理 %d 个位置（共 %d 个）"),
                                     MaxPositions, QueryResults.Num()));
         }
 
@@ -262,7 +262,7 @@ EStateTreeRunStatus FStateTreeEQSUtilityTask::EnterState(FStateTreeExecutionCont
     {
         if (bEnableDebugOutput)
         {
-            LogDebug(TEXT("EQSUtility: EQS query failed or returned no results"));
+            LogDebug(TEXT("EQS效用：EQS查询失败或无结果"));
         }
 
         InstanceData.bFoundValidPosition = false;
@@ -326,11 +326,11 @@ float FStateTreeEQSUtilityTask::EvaluatePosition(const FVector& Position, const 
 #if WITH_EDITOR
 FText FStateTreeEQSUtilityTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
 {
-    return FText::FromString(TEXT("EQS + Utility Position Scoring"));
+    return FText::FromString(TEXT("EQS + 效用位置评分"));
 }
 #endif
 
-// === FStateTreeEQSCacheManagerTask Implementation ===
+// === FStateTreeEQSCacheManagerTask 实现 ===
 
 EStateTreeRunStatus FStateTreeEQSCacheManagerTask::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
@@ -338,22 +338,22 @@ EStateTreeRunStatus FStateTreeEQSCacheManagerTask::EnterState(FStateTreeExecutio
     
     if (InstanceData.bClearAllCaches)
     {
-        // Clear all EQS and Utility caches
+        // 清理所有EQS和效用缓存
         ClearAllCaches();
-        InstanceData.CacheStatsInfo = TEXT("All caches cleared");
+        InstanceData.CacheStatsInfo = TEXT("所有缓存已清理");
     }
     
     if (InstanceData.bClearExpiredCaches)
     {
-        // Clear expired caches
+        // 清理过期缓存
         ClearExpiredCaches(FPlatformTime::Seconds());
-        InstanceData.CacheStatsInfo += TEXT(" | Expired caches cleared");
+        InstanceData.CacheStatsInfo += TEXT(" | 过期缓存已清理");
     }
     
     if (InstanceData.bShowCacheStats)
     {
-        // Display cache statistics
-        InstanceData.CacheStatsInfo += TEXT(" | Cache statistics available");
+        // 显示缓存统计
+        InstanceData.CacheStatsInfo += TEXT(" | 缓存统计可用");
     }
     
     return EStateTreeRunStatus::Succeeded;
@@ -362,6 +362,6 @@ EStateTreeRunStatus FStateTreeEQSCacheManagerTask::EnterState(FStateTreeExecutio
 #if WITH_EDITOR
 FText FStateTreeEQSCacheManagerTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
 {
-    return FText::FromString(TEXT("Manage EQS Cache"));
+    return FText::FromString(TEXT("管理EQS缓存"));
 }
 #endif

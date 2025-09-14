@@ -100,7 +100,7 @@ float FUtilityProfile::CalculateScore(const FUtilityContext& Context, TMap<ECons
         if (bEnableDebugOutput)
         {
             FString TypeName = UEnum::GetValueAsString(Consideration.ConsiderationType);
-            UE_LOG(LogTemp, Log, TEXT("UtilityProfile[%s]: %s = %.3f (Weight: %.3f)"), 
+            UE_LOG(LogTemp, Log, TEXT("效用配置[%s]: %s = %.3f （权重: %.3f）"),
                    *ProfileName, *TypeName, Score, Weight);
         }
     }
@@ -114,8 +114,8 @@ float FUtilityProfile::CalculateScore(const FUtilityContext& Context, TMap<ECons
 
     if (bEnableDebugOutput)
     {
-        UE_LOG(LogTemp, Log, TEXT("UtilityProfile[%s]: Final Score = %.3f (Valid: %s)"), 
-               *ProfileName, FinalScore, bIsValid ? TEXT("Yes") : TEXT("No"));
+        UE_LOG(LogTemp, Log, TEXT("效用配置[%s]: 最终评分 = %.3f （有效: %s）"),
+               *ProfileName, FinalScore, bIsValid ? TEXT("是") : TEXT("否"));
     }
 
     return FinalScore;
@@ -245,13 +245,13 @@ bool UUtilityCalculator::ValidateUtilityProfile(const FUtilityProfile& Profile, 
 {
     if (Profile.ProfileName.IsEmpty())
     {
-        OutErrorMessage = TEXT("Profile name is empty");
+        OutErrorMessage = TEXT("配置名称为空");
         return false;
     }
 
     if (Profile.Considerations.Num() == 0)
     {
-        OutErrorMessage = TEXT("No considerations defined");
+        OutErrorMessage = TEXT("未定义考虑因素");
         return false;
     }
 
@@ -259,11 +259,11 @@ bool UUtilityCalculator::ValidateUtilityProfile(const FUtilityProfile& Profile, 
     {
         if (Consideration.ConsiderationType == EConsiderationType::Custom && Consideration.CustomKey.IsEmpty())
         {
-            OutErrorMessage = TEXT("Custom consideration has empty key");
+            OutErrorMessage = TEXT("自定义考虑因素的键值为空");
             return false;
         }
     }
 
-    OutErrorMessage = TEXT("Profile is valid");
+    OutErrorMessage = TEXT("配置有效");
     return true;
 }

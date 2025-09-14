@@ -13,14 +13,14 @@ EStateTreeRunStatus FStateTreeUniversalUtilityTask::EnterState(FStateTreeExecuti
 
     if (!InstanceData.EnemyCharacter)
     {
-        LogDebug(TEXT("UniversalUtilityTask: EnemyCharacter is null"));
-        InstanceData.ErrorMessage = TEXT("No EnemyCharacter found");
+        LogDebug(TEXT("通用效用任务：敌人角色为空"));
+        InstanceData.ErrorMessage = TEXT("未找到敌人角色");
         return EStateTreeRunStatus::Failed;
     }
 
     if (bEnableDebugOutput)
     {
-        LogDebug(TEXT("UniversalUtilityTask: Starting utility evaluation"));
+        LogDebug(TEXT("通用效用任务：开始效用评估"));
     }
 
     // 初始化评分计算
@@ -73,7 +73,7 @@ void FStateTreeUniversalUtilityTask::ExitState(FStateTreeExecutionContext& Conte
     if (bEnableDebugOutput)
     {
         const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-        LogDebug(FString::Printf(TEXT("UniversalUtilityTask: Exiting with final score %.3f"), 
+        LogDebug(FString::Printf(TEXT("通用效用任务：以最终评分 %.3f 退出"),
                                 InstanceData.FinalScore));
     }
 }
@@ -86,7 +86,7 @@ bool FStateTreeUniversalUtilityTask::UpdateScore(FStateTreeExecutionContext& Con
     AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.EnemyCharacter->GetController());
     if (!AIController)
     {
-        UE_LOG(LogTemp, Error, TEXT("UniversalUtilityTask: AIController is null or not ElementalCombatAIController"));
+        UE_LOG(LogTemp, Error, TEXT("通用效用任务：AI控制器为空或不是元素战斗AI控制器"));
         return false;
     }
     
@@ -104,11 +104,11 @@ bool FStateTreeUniversalUtilityTask::UpdateScore(FStateTreeExecutionContext& Con
 
     if (bEnableDebugOutput)
     {
-        LogDebug(FString::Printf(TEXT("UniversalUtilityTask: Updated score to %.3f (Valid: %s)"), 
-                                NewScore, NewScore > 0.01f ? TEXT("Yes") : TEXT("No")));
+        LogDebug(FString::Printf(TEXT("通用效用任务：将评分更新为 %.3f（有效：%s）"),
+                                NewScore, NewScore > 0.01f ? TEXT("是") : TEXT("否")));
 
         // 显示上下文信息
-        LogDebug(FString::Printf(TEXT("  Health: %.3f, Distance: %.3f, Element: %.3f"), 
+        LogDebug(FString::Printf(TEXT("  生命值：%.3f， 距离：%.3f， 元素：%.3f"),
                                 UtilityContext.HealthPercent, UtilityContext.DistanceToTarget, UtilityContext.ElementAdvantage));
     }
 
@@ -128,7 +128,7 @@ bool FStateTreeUniversalUtilityTask::ShouldUpdate(const FInstanceDataType& Insta
 #if WITH_EDITOR
 FText FStateTreeUniversalUtilityTask::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
 {
-    return NSLOCTEXT("StateTreeEditor", "UniversalUtility", "Universal Utility Scorer (使用AIController配置)");
+    return NSLOCTEXT("StateTreeEditor", "UniversalUtility", "通用效用评分器（使用AI控制器配置）");
 }
 #endif
 
@@ -140,8 +140,8 @@ EStateTreeRunStatus FStateTreeUtilityConsiderationTask::EnterState(FStateTreeExe
 
     if (!InstanceData.EnemyCharacter)
     {
-        LogDebug(TEXT("UtilityConsiderationTask: EnemyCharacter is null"));
-        InstanceData.ErrorMessage = TEXT("No EnemyCharacter found");
+        LogDebug(TEXT("效用考虑任务：敌人角色为空"));
+        InstanceData.ErrorMessage = TEXT("未找到敌人角色");
         return EStateTreeRunStatus::Failed;
     }
 
@@ -161,9 +161,9 @@ EStateTreeRunStatus FStateTreeUtilityConsiderationTask::EnterState(FStateTreeExe
     if (bEnableDebugOutput)
     {
         FString TypeName = UEnum::GetValueAsString(InstanceData.Consideration.ConsiderationType);
-        LogDebug(FString::Printf(TEXT("UtilityConsideration[%s]: Input=%.3f, Score=%.3f, Valid=%s"), 
+        LogDebug(FString::Printf(TEXT("效用考虑[%s]：输入=%.3f， 评分=%.3f， 有效=%s"),
                                 *TypeName, InstanceData.InputValue, InstanceData.ConsiderationScore,
-                                InstanceData.bScoreValid ? TEXT("Yes") : TEXT("No")));
+                                InstanceData.bScoreValid ? TEXT("是") : TEXT("否")));
     }
 
     return InstanceData.bScoreValid ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Failed;
@@ -176,9 +176,9 @@ FText FStateTreeUtilityConsiderationTask::GetDescription(const FGuid& ID, FState
     if (InstanceData)
     {
         FString TypeName = UEnum::GetValueAsString(InstanceData->Consideration.ConsiderationType);
-        return FText::FromString(FString::Printf(TEXT("Consideration: %s"), *TypeName));
+        return FText::FromString(FString::Printf(TEXT("考虑因子：%s"), *TypeName));
     }
-    return NSLOCTEXT("StateTreeEditor", "UtilityConsideration", "Utility Consideration");
+    return NSLOCTEXT("StateTreeEditor", "UtilityConsideration", "效用考虑因子");
 }
 #endif
 
@@ -190,8 +190,8 @@ EStateTreeRunStatus FStateTreeUtilityComparisonTask::EnterState(FStateTreeExecut
 
     if (!InstanceData.EnemyCharacter)
     {
-        LogDebug(TEXT("UtilityComparisonTask: EnemyCharacter is null"));
-        InstanceData.ErrorMessage = TEXT("No EnemyCharacter found");
+        LogDebug(TEXT("效用比较任务：敌人角色为空"));
+        InstanceData.ErrorMessage = TEXT("未找到敌人角色");
         return EStateTreeRunStatus::Failed;
     }
 
@@ -199,7 +199,7 @@ EStateTreeRunStatus FStateTreeUtilityComparisonTask::EnterState(FStateTreeExecut
     AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.AIController);
     if (!AIController)
     {
-        InstanceData.ErrorMessage = TEXT("No ElementalCombatAIController found");
+        InstanceData.ErrorMessage = TEXT("未找到元素战斗AI控制器");
         return EStateTreeRunStatus::Failed;
     }
 
@@ -271,9 +271,9 @@ FText FStateTreeUtilityComparisonTask::GetDescription(const FGuid& ID, FStateTre
     const FInstanceDataType* InstanceData = InstanceDataView.GetPtr<FInstanceDataType>();
     if (InstanceData && InstanceData->bUseWeightVariations)
     {
-        return FText::FromString(TEXT("Compare: Weight Variations A vs B"));
+        return FText::FromString(TEXT("比较：权重变体A vs B"));
     }
-    return NSLOCTEXT("StateTreeEditor", "UtilityComparison", "Utility Score Comparison (AIController Based)");
+    return NSLOCTEXT("StateTreeEditor", "UtilityComparison", "效用评分比较（基于AI控制器）");
 }
 #endif
 
@@ -285,8 +285,8 @@ EStateTreeRunStatus FStateTreeDynamicUtilityTask::EnterState(FStateTreeExecution
 
     if (!InstanceData.EnemyCharacter)
     {
-        LogDebug(TEXT("DynamicUtilityTask: EnemyCharacter is null"));
-        InstanceData.ErrorMessage = TEXT("No EnemyCharacter found");
+        LogDebug(TEXT("动态效用任务：敌人角色为空"));
+        InstanceData.ErrorMessage = TEXT("未找到敌人角色");
         return EStateTreeRunStatus::Failed;
     }
 
@@ -297,7 +297,7 @@ EStateTreeRunStatus FStateTreeDynamicUtilityTask::EnterState(FStateTreeExecution
     AElementalCombatAIController* AIController = Cast<AElementalCombatAIController>(InstanceData.AIController);
     if (!AIController)
     {
-        InstanceData.ErrorMessage = TEXT("No ElementalCombatAIController found");
+        InstanceData.ErrorMessage = TEXT("未找到元素战斗AI控制器");
         return EStateTreeRunStatus::Failed;
     }
 
@@ -422,8 +422,8 @@ FText FStateTreeDynamicUtilityTask::GetDescription(const FGuid& ID, FStateTreeDa
     const FInstanceDataType* InstanceData = InstanceDataView.GetPtr<FInstanceDataType>();
     if (InstanceData)
     {
-        return FText::FromString(TEXT("Dynamic Utility: AIController Config"));
+        return FText::FromString(TEXT("动态效用：AI控制器配置"));
     }
-    return NSLOCTEXT("StateTreeEditor", "DynamicUtility", "Dynamic Utility Weights");
+    return NSLOCTEXT("StateTreeEditor", "DynamicUtility", "动态效用权重");
 }
 #endif
