@@ -34,6 +34,10 @@ public:
 	AElementalCombatEnemy();
 
 protected:
+	// 元素组件
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ElementalCombat|AI")
+	class UElementalComponent* ElementalComponent;
+
 	// AI攻击距离配置
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|AI")
 	float MeleeAttackRange = 200.0f;

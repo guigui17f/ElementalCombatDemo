@@ -18,6 +18,18 @@ AAdvancedCombatCharacter::AAdvancedCombatCharacter()
 	ElementalComponent = CreateDefaultSubobject<UElementalComponent>(TEXT("ElementalComponent"));
 }
 
+void AAdvancedCombatCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// 设置初始元素为土元素
+	if (ElementalComponent)
+	{
+		ElementalComponent->SwitchElement(EElementalType::Earth);
+		UE_LOG(LogTemp, Log, TEXT("%s: 初始化为土元素"), *GetName());
+	}
+}
+
 void AAdvancedCombatCharacter::DoChargedAttackStart()
 {
 	// 调用父类实现（播放动画等）

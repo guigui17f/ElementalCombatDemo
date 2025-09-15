@@ -96,6 +96,8 @@ public:
 	virtual void Landed(const FHitResult& Hit) override;
 
 protected:
+	// 初始化
+	virtual void BeginPlay() override;
 
 	// 计算蓄力倍率
 	float GetChargeMultiplier(float ChargeTime) const;

@@ -6,6 +6,8 @@
 #include "Animation/AnimInstance.h"
 #include "Engine/World.h"
 #include "Variant_Combat/UI/CombatLifeBar.h"
+#include "Combat/Elemental/ElementalComponent.h"
+#include "Combat/Elemental/ElementalDataAsset.h"
 
 AElementalCombatEnemy::AElementalCombatEnemy()
 {
@@ -14,11 +16,48 @@ AElementalCombatEnemy::AElementalCombatEnemy()
 	RangedAttackRange = 1000.0f;
 	PreferredAttackRange = 500.0f;
 	ProjectileSocketName = TEXT("hand_r");
+
+	// 创建元素组件
+	ElementalComponent = CreateDefaultSubobject<UElementalComponent>(TEXT("ElementalComponent"));
 }
 
 void AElementalCombatEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 初始化元素 - 从配置中随机选择
+	if (ElementalComponent)
+	{
+		// 获取所有配置的元素类型
+		if (UElementalDataAsset* DataAsset = ElementalComponent->GetElementalDataAsset())
+		{
+			TArray<EElementalType> ConfiguredElements = DataAsset->GetConfiguredElements();
+
+			// 过滤掉None元素
+			ConfiguredElements.RemoveAll([](EElementalType Element) {
+				return Element == EElementalType::None;
+			});
+
+			// 如果有配置的元素，随机选择一个
+			if (ConfiguredElements.Num() > 0)
+			{
+				int32 RandomIndex = FMath::RandRange(0, ConfiguredElements.Num() - 1);
+				EElementalType SelectedElement = ConfiguredElements[RandomIndex];
+				ElementalComponent->SwitchElement(SelectedElement);
+
+				UE_LOG(LogTemp, Log, TEXT("%s: 随机选择了 %d 元素"),
+					*GetName(), (int32)SelectedElement);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("%s: 没有找到可用的配置元素，保持None状态"), *GetName());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("%s: 无法获取ElementalDataAsset"), *GetName());
+		}
+	}
 }
 
 EAIAttackType AElementalCombatEnemy::DecideAttackType(float DistanceToTarget) const
