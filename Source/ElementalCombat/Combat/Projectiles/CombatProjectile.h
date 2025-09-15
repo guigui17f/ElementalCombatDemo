@@ -21,7 +21,7 @@ struct FProjectileConfig
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat|Projectiles")
-	float BaseDamage = 2.0f;
+	float BaseDamage = 0.6f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Combat|Projectiles")
 	float InitialSpeed = 1000.0f;

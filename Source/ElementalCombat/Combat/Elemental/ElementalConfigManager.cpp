@@ -97,9 +97,10 @@ float UElementalConfigManager::GetCounterMultiplier(EElementalType AttackerEleme
 			{
 				if (Counter.CounteredElement == AttackerElement)
 				{
-					// 被克制时使用倒数，但至少为0.1倍
-					float InverseMultiplier = 1.0f / FMath::Max(Counter.EffectMultiplier, 1.0f);
-					return FMath::Max(InverseMultiplier, 0.1f);
+					// 被克制时使用对称减法：1 - (克制倍率 - 1)
+					// 例如：克制1.5倍时，被克制为0.5倍
+					float DisadvantageMultiplier = 1.0f - (Counter.EffectMultiplier - 1.0f);
+					return FMath::Max(DisadvantageMultiplier, 0.1f);
 				}
 			}
 		}
