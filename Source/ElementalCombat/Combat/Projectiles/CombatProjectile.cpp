@@ -297,161 +297,181 @@ float ACombatProjectile::CalculateAngleForDistance(float TargetDistance, float H
 	{
 		UE_LOG(LogTemp, Warning, TEXT("CalculateAngleForDistance: 无效参数 - 距离:%.1f, 速度:%.1f, 重力:%.1f"),
 			TargetDistance, BaseSpeed, Gravity);
-		return 15.0f; // 返回默认角度
+		return 15.0f;
 	}
 
-	// 考虑高度差的弹道计算
-	// 使用完整的斜抛运动方程
-
-	// 第一步：尝试15度固定角度
 	const float PreferredAngle = 15.0f;
 	const float MaxAngle = 30.0f;
+	const float MaxSpeed = ProjectileConfig.MaxSpeed;
 
-	// 计算15度角下能到达的水平距离（考虑高度差）
-	// 完整公式: x = (v²/g) * sin(2θ) * (1 + sqrt(1 + 2gh/(v²sin²θ)))
-	float AngleRad15 = FMath::DegreesToRadians(PreferredAngle);
-	float SinAngle15 = FMath::Sin(AngleRad15);
-	float Sin2Angle15 = FMath::Sin(2.0f * AngleRad15);
-
-	// 计算高度修正因子
-	float HeightFactor15 = 1.0f;
-	if (FMath::Abs(HeightDifference) > 0.1f) // 避免微小高度差的计算误差
+	// 精确计算有高度差的射程（给定速度和角度）
+	auto CalculateRangeWithHeight = [&](float Speed, float AngleDegrees) -> float
 	{
-		float HeightTerm = 2.0f * Gravity * HeightDifference / (BaseSpeed * BaseSpeed * SinAngle15 * SinAngle15);
-		if (HeightTerm > -1.0f) // 确保平方根内容为正
+		float AngleRad = FMath::DegreesToRadians(AngleDegrees);
+		float SinAngle = FMath::Sin(AngleRad);
+		float Sin2Angle = FMath::Sin(2.0f * AngleRad);
+
+		// 精确公式: R = (v²/g) * sin(2θ) * [1 + √(1 + 2gh/(v²sin²θ))] / 2
+		float BaseRange = (Speed * Speed / Gravity) * Sin2Angle;
+
+		if (FMath::Abs(HeightDifference) < 0.1f)
 		{
-			HeightFactor15 = 1.0f + FMath::Sqrt(1.0f + HeightTerm);
+			// 无高度差，使用基础抛物线公式
+			return BaseRange;
 		}
-	}
 
-	float Range15 = (BaseSpeed * BaseSpeed / Gravity) * Sin2Angle15 * HeightFactor15;
+		// 使用负的HeightDifference，因为物理公式中h表示落点相对于发射点的高度
+		// HeightDifference > 0表示目标更高，在公式中需要为负值
+		float HeightTerm = -2.0f * Gravity * HeightDifference / (Speed * Speed * SinAngle * SinAngle);
 
-	if (Range15 >= TargetDistance)
-	{
-		// 15度角落点过远，反推需要的速度
-		// 反推时需要考虑高度差，使用迭代法求解
-		float RequiredSpeed = BaseSpeed;
-		for (int32 i = 0; i < 5; ++i) // 最多5次迭代
+		// 确保平方根内容非负
+		if (1.0f + HeightTerm < 0.0f)
 		{
-			float TestHeightFactor = 1.0f;
-			if (FMath::Abs(HeightDifference) > 0.1f)
+			return 0.0f; // 无法到达目标
+		}
+
+		float HeightFactor = (1.0f + FMath::Sqrt(1.0f + HeightTerm)) / 2.0f;
+		return BaseRange * HeightFactor;
+	};
+
+	// 第一步：尝试15度固定角度，使用数值方法求解精确速度
+	// 由于精确公式复杂，使用二分查找求解所需速度
+	auto FindRequiredSpeed = [&](float AngleDegrees) -> float
+	{
+		float MinSpeed = 100.0f;
+		float MaxSearchSpeed = ProjectileConfig.MaxSpeed * 2.0f;
+		const float Tolerance = 1.0f; // 1单位容差
+		const int MaxIterations = 10;
+
+		for (int32 i = 0; i < MaxIterations; ++i)
+		{
+			float TestSpeed = (MinSpeed + MaxSearchSpeed) / 2.0f;
+			float TestRange = CalculateRangeWithHeight(TestSpeed, AngleDegrees);
+
+			if (FMath::Abs(TestRange - TargetDistance) < Tolerance)
 			{
-				float TestHeightTerm = 2.0f * Gravity * HeightDifference / (RequiredSpeed * RequiredSpeed * SinAngle15 * SinAngle15);
-				if (TestHeightTerm > -1.0f)
-				{
-					TestHeightFactor = 1.0f + FMath::Sqrt(1.0f + TestHeightTerm);
-				}
+				return TestSpeed; // 找到合适的速度
 			}
-			float TestRange = (RequiredSpeed * RequiredSpeed / Gravity) * Sin2Angle15 * TestHeightFactor;
 
-			if (FMath::Abs(TestRange - TargetDistance) < 1.0f) break; // 精度足够
-
-			RequiredSpeed *= FMath::Sqrt(TargetDistance / TestRange);
+			if (TestRange > TargetDistance)
+			{
+				MaxSearchSpeed = TestSpeed; // 速度过高，降低上限
+			}
+			else
+			{
+				MinSpeed = TestSpeed; // 速度过低，提高下限
+			}
 		}
 
-		float RequiredSpeedMultiplier = RequiredSpeed / (ProjectileConfig.InitialSpeed * SpeedMultiplier);
-		const_cast<ACombatProjectile*>(this)->SpeedMultiplier *= RequiredSpeedMultiplier;
+		return (MinSpeed + MaxSearchSpeed) / 2.0f; // 返回最接近的值
+	};
 
-		UE_LOG(LogTemp, Log, TEXT("AI投掷物15度角速度调整: 新倍率=%.2f, 目标距离=%.1f, 高度差=%.1f"),
+	float RequiredSpeed15 = FindRequiredSpeed(PreferredAngle);
+
+	if (RequiredSpeed15 <= BaseSpeed)
+	{
+		// 15度角可以达到目标，调整速度
+		float RequiredSpeedMultiplier = RequiredSpeed15 / ProjectileConfig.InitialSpeed;
+		const_cast<ACombatProjectile*>(this)->SpeedMultiplier = RequiredSpeedMultiplier;
+
+		UE_LOG(LogTemp, Log, TEXT("AI投掷物15度角精确速度调整: 新倍率=%.2f, 目标距离=%.1f, 高度差=%.1f"),
 			SpeedMultiplier, TargetDistance, HeightDifference);
 
 		return PreferredAngle;
 	}
 
-	// 第二步：15度角落点过近，尝试增加角度
-	// 对于有高度差的情况，使用数值方法寻找合适的角度
-	float BestAngle = PreferredAngle;
-	float BestRangeDiff = FMath::Abs(Range15 - TargetDistance);
-
-	for (float TestAngle = PreferredAngle + 1.0f; TestAngle <= MaxAngle; TestAngle += 1.0f)
+	// 第二步：15度角需要的速度太高，使用固定速度计算最优角度
+	// 使用二分查找在15-30度范围内寻找最优角度
+	auto FindOptimalAngle = [&]() -> float
 	{
-		float TestAngleRad = FMath::DegreesToRadians(TestAngle);
-		float TestSinAngle = FMath::Sin(TestAngleRad);
-		float TestSin2Angle = FMath::Sin(2.0f * TestAngleRad);
+		float MinAngle = PreferredAngle;
+		float MaxSearchAngle = MaxAngle;
+		float BestAngle = PreferredAngle;
+		float BestRangeDiff = FLT_MAX;
+		const float AngleTolerance = 0.5f; // 0.5度容差
+		const int MaxIterations = 10;
 
-		float TestHeightFactor = 1.0f;
-		if (FMath::Abs(HeightDifference) > 0.1f)
+		// 先检查边界条件
+		float RangeAtMin = CalculateRangeWithHeight(BaseSpeed, MinAngle);
+		float RangeAtMax = CalculateRangeWithHeight(BaseSpeed, MaxSearchAngle);
+
+		if (RangeAtMax < TargetDistance)
 		{
-			float TestHeightTerm = 2.0f * Gravity * HeightDifference / (BaseSpeed * BaseSpeed * TestSinAngle * TestSinAngle);
-			if (TestHeightTerm > -1.0f)
+			// 即使30度也不够，返回30度
+			return MaxAngle;
+		}
+
+		if (RangeAtMin >= TargetDistance)
+		{
+			// 15度就足够，返回15度
+			return PreferredAngle;
+		}
+
+		// 使用二分查找
+		for (int32 i = 0; i < MaxIterations; ++i)
+		{
+			float TestAngle = (MinAngle + MaxSearchAngle) / 2.0f;
+			float TestRange = CalculateRangeWithHeight(BaseSpeed, TestAngle);
+			float RangeDiff = FMath::Abs(TestRange - TargetDistance);
+
+			if (RangeDiff < BestRangeDiff)
 			{
-				TestHeightFactor = 1.0f + FMath::Sqrt(1.0f + TestHeightTerm);
+				BestAngle = TestAngle;
+				BestRangeDiff = RangeDiff;
+			}
+
+			if (RangeDiff < AngleTolerance)
+			{
+				return TestAngle; // 找到足够精确的角度
+			}
+
+			if (TestRange > TargetDistance)
+			{
+				MaxSearchAngle = TestAngle; // 角度过大，降低上限
+			}
+			else
+			{
+				MinAngle = TestAngle; // 角度过小，提高下限
 			}
 		}
 
-		float TestRange = (BaseSpeed * BaseSpeed / Gravity) * TestSin2Angle * TestHeightFactor;
-		float RangeDiff = FMath::Abs(TestRange - TargetDistance);
+		return BestAngle;
+	};
 
-		if (RangeDiff < BestRangeDiff)
-		{
-			BestAngle = TestAngle;
-			BestRangeDiff = RangeDiff;
-		}
+	float OptimalAngleDegrees = FindOptimalAngle();
 
-		if (TestRange >= TargetDistance)
-		{
-			UE_LOG(LogTemp, Log, TEXT("AI投掷物角度调整: 使用角度=%.1f°, 目标距离=%.1f, 高度差=%.1f"),
-				BestAngle, TargetDistance, HeightDifference);
-			return BestAngle;
-		}
+	// 如果找到了有效角度（不是边界的30度）
+	if (OptimalAngleDegrees < MaxAngle)
+	{
+		UE_LOG(LogTemp, Log, TEXT("AI投掷物精确角度调整: 使用角度=%.1f°, 目标距离=%.1f, 高度差=%.1f"),
+			OptimalAngleDegrees, TargetDistance, HeightDifference);
+
+		return OptimalAngleDegrees;
 	}
 
-	// 第三步：即使30度角也不够，增加速度
-	float AngleRad30 = FMath::DegreesToRadians(MaxAngle);
-	float SinAngle30 = FMath::Sin(AngleRad30);
-	float Sin2Angle30 = FMath::Sin(2.0f * AngleRad30);
+	// 第三步：即使30度角也无法达到，使用30度角并计算所需速度
+	float RequiredSpeed30 = FindRequiredSpeed(MaxAngle);
 
-	// 反推所需速度（考虑高度差）
-	float RequiredSpeed = BaseSpeed;
-	for (int32 i = 0; i < 5; ++i)
+	if (RequiredSpeed30 <= MaxSpeed)
 	{
-		float TestHeightFactor = 1.0f;
-		if (FMath::Abs(HeightDifference) > 0.1f)
-		{
-			float TestHeightTerm = 2.0f * Gravity * HeightDifference / (RequiredSpeed * RequiredSpeed * SinAngle30 * SinAngle30);
-			if (TestHeightTerm > -1.0f)
-			{
-				TestHeightFactor = 1.0f + FMath::Sqrt(1.0f + TestHeightTerm);
-			}
-		}
-		float TestRange = (RequiredSpeed * RequiredSpeed / Gravity) * Sin2Angle30 * TestHeightFactor;
+		// 在最大速度范围内，调整速度
+		float RequiredSpeedMultiplier = RequiredSpeed30 / ProjectileConfig.InitialSpeed;
+		const_cast<ACombatProjectile*>(this)->SpeedMultiplier = RequiredSpeedMultiplier;
 
-		if (FMath::Abs(TestRange - TargetDistance) < 1.0f) break;
-
-		RequiredSpeed *= FMath::Sqrt(TargetDistance / TestRange);
-	}
-
-	float MaxSpeed = ProjectileConfig.MaxSpeed;
-
-	if (RequiredSpeed <= MaxSpeed)
-	{
-		float RequiredSpeedMultiplier = RequiredSpeed / (ProjectileConfig.InitialSpeed * SpeedMultiplier);
-		const_cast<ACombatProjectile*>(this)->SpeedMultiplier *= RequiredSpeedMultiplier;
-
-		UE_LOG(LogTemp, Log, TEXT("AI投掷物30度角速度调整: 新倍率=%.2f, 目标距离=%.1f, 高度差=%.1f"),
+		UE_LOG(LogTemp, Log, TEXT("AI投掷物30度角精确速度调整: 新倍率=%.2f, 目标距离=%.1f, 高度差=%.1f"),
 			SpeedMultiplier, TargetDistance, HeightDifference);
 
 		return MaxAngle;
 	}
 	else
 	{
-		// 使用最大速度
-		float MaxSpeedMultiplier = MaxSpeed / (ProjectileConfig.InitialSpeed * SpeedMultiplier);
-		const_cast<ACombatProjectile*>(this)->SpeedMultiplier *= MaxSpeedMultiplier;
+		// 使用最大速度，计算实际可达距离
+		float MaxSpeedMultiplier = MaxSpeed / ProjectileConfig.InitialSpeed;
+		const_cast<ACombatProjectile*>(this)->SpeedMultiplier = MaxSpeedMultiplier;
 
-		// 计算实际落点距离
-		float ActualHeightFactor = 1.0f;
-		if (FMath::Abs(HeightDifference) > 0.1f)
-		{
-			float ActualHeightTerm = 2.0f * Gravity * HeightDifference / (MaxSpeed * MaxSpeed * SinAngle30 * SinAngle30);
-			if (ActualHeightTerm > -1.0f)
-			{
-				ActualHeightFactor = 1.0f + FMath::Sqrt(1.0f + ActualHeightTerm);
-			}
-		}
-		float ActualRange = (MaxSpeed * MaxSpeed / Gravity) * Sin2Angle30 * ActualHeightFactor;
+		float ActualRange = CalculateRangeWithHeight(MaxSpeed, MaxAngle);
 
-		UE_LOG(LogTemp, Warning, TEXT("AI投掷物无法到达目标距离%.1f，使用最大速度，实际落点=%.1f, 高度差=%.1f"),
+		UE_LOG(LogTemp, Log, TEXT("AI投掷物无法到达目标距离%.1f，使用最大速度，精确落点=%.1f, 高度差=%.1f"),
 			TargetDistance, ActualRange, HeightDifference);
 
 		return MaxAngle;
