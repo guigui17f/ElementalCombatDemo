@@ -9,6 +9,8 @@
 #include "EnhancedInputComponent.h"
 #include "Variant_Combat/UI/CombatLifeBar.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 
 AAdvancedCombatCharacter::AAdvancedCombatCharacter()
 {
@@ -41,8 +43,18 @@ void AAdvancedCombatCharacter::BeginPlay()
 
 void AAdvancedCombatCharacter::DoChargedAttackStart()
 {
-	// 调用父类实现（播放动画等）
-	Super::DoChargedAttackStart();
+	// 设置蓄力攻击状态
+	bIsChargingAttack = true;
+
+	// 如果正在攻击中，缓存输入时间
+	if (bIsAttacking)
+	{
+		CachedAttackInputTime = GetWorld()->GetTimeSeconds();
+		return;
+	}
+
+	// 执行远程攻击而不是蓄力攻击
+	DoRangedAttack();
 
 	// 记录蓄力开始时间
 	ChargeStartTime = GetWorld()->GetTimeSeconds();
@@ -394,4 +406,33 @@ void AAdvancedCombatCharacter::UpdateMaterialColors(FLinearColor Color)
 
 	UE_LOG(LogTemp, Log, TEXT("%s: 更新材质颜色为 (%.2f, %.2f, %.2f, %.2f)"),
 		*GetName(), Color.R, Color.G, Color.B, Color.A);
+}
+
+void AAdvancedCombatCharacter::DoRangedAttack()
+{
+	// 设置攻击状态
+	bIsAttacking = true;
+
+	// 播放远程攻击动画蒙太奇
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		if (RangedAttackMontage)
+		{
+			const float MontageLength = AnimInstance->Montage_Play(RangedAttackMontage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
+
+			// 设置动画结束代理
+			if (MontageLength > 0.0f)
+			{
+				AnimInstance->Montage_SetEndDelegate(OnAttackMontageEnded, RangedAttackMontage);
+			}
+
+			UE_LOG(LogTemp, Log, TEXT("%s: 播放远程攻击动画，长度: %.2f秒"), *GetName(), MontageLength);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("%s: 远程攻击动画蒙太奇未设置"), *GetName());
+			// 如果没有动画，直接结束攻击状态
+			bIsAttacking = false;
+		}
+	}
 }

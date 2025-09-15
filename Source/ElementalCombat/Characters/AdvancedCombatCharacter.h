@@ -12,6 +12,7 @@ class UCurveFloat;
 class UElementalComponent;
 class UInputAction;
 class UCombatLifeBar;
+class UAnimMontage;
 
 /**
  * 高级战斗角色类
@@ -38,6 +39,10 @@ protected:
 	// 发射位置Socket名称
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	FName ProjectileSocketName = TEXT("hand_r");
+
+	// 远程攻击动画蒙太奇
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Characters")
+	UAnimMontage* RangedAttackMontage;
 
 	// 蓄力影响曲线
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Characters")
@@ -110,6 +115,9 @@ protected:
 
 	// 更新材质颜色
 	void UpdateMaterialColors(FLinearColor Color);
+
+	// 执行远程攻击动画
+	void DoRangedAttack();
 
 	// 蓝图事件 - 投掷物发射时
 	UFUNCTION(BlueprintImplementableEvent, Category="ElementalCombat|Characters")
