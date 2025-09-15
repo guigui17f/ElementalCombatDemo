@@ -30,12 +30,14 @@ EStateTreeRunStatus FStateTreeUniversalUtilityTask::EnterState(FStateTreeExecuti
         {
             return EStateTreeRunStatus::Failed;
         }
+        // 初始化LastUpdateTime
+        InstanceData.LastUpdateTime = GetCurrentWorldTime(Context);
     }
 
-    // 如果不需要持续更新，直接成功
+    // 如果不需要持续更新，根据评分有效性决定结果
     if (!InstanceData.bContinuousUpdate)
     {
-        return EStateTreeRunStatus::Succeeded;
+        return InstanceData.bScoreValid ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Failed;
     }
 
     // 需要持续更新，保持运行状态
@@ -100,7 +102,8 @@ bool FStateTreeUniversalUtilityTask::UpdateScore(FStateTreeExecutionContext& Con
 
     // 更新实例数据
     InstanceData.FinalScore = NewScore;
-    InstanceData.bTaskCompleted = NewScore > 0.01f;
+    InstanceData.bScoreValid = NewScore > 0.01f;
+    InstanceData.bTaskCompleted = InstanceData.bScoreValid;
 
     if (bEnableDebugOutput)
     {
@@ -112,7 +115,7 @@ bool FStateTreeUniversalUtilityTask::UpdateScore(FStateTreeExecutionContext& Con
                                 UtilityContext.HealthPercent, UtilityContext.DistanceToTarget, UtilityContext.ElementAdvantage));
     }
 
-    return NewScore > 0.01f;
+    return true;
 }
 
 bool FStateTreeUniversalUtilityTask::ShouldUpdate(const FInstanceDataType& InstanceData, float CurrentTime) const
