@@ -77,10 +77,32 @@ void AAdvancedCombatCharacter::LaunchProjectile()
 	// 计算蓄力时间
 	float ChargeTime = GetWorld()->GetTimeSeconds() - ChargeStartTime;
 	
-	// 获取发射位置和方向
+	// 获取发射位置
 	FVector SpawnLocation;
-	FRotator SpawnRotation;
+	FRotator SpawnRotation; // 占位，不会被使用
 	GetProjectileLaunchParams(SpawnLocation, SpawnRotation);
+
+	// 获取前向方向（用于计算初始朝向）
+	FVector ForwardDirection;
+	if (GetController())
+	{
+		// 使用控制器的yaw方向，忽略pitch
+		FRotator ControlRot = GetControlRotation();
+		ControlRot.Pitch = 0.0f;
+		ForwardDirection = ControlRot.Vector();
+	}
+	else
+	{
+		ForwardDirection = GetActorForwardVector();
+	}
+
+	// 计算15度仰角的初始朝向
+	FVector LaunchDirection = ForwardDirection;
+	LaunchDirection.Z = 0.0f;
+	LaunchDirection.Normalize();
+	float AngleRad = FMath::DegreesToRadians(15.0f);
+	LaunchDirection = LaunchDirection * FMath::Cos(AngleRad) + FVector::UpVector * FMath::Sin(AngleRad);
+	FRotator InitialRotation = LaunchDirection.Rotation();
 
 	// 设置生成参数
 	FActorSpawnParameters SpawnParams;
@@ -88,11 +110,11 @@ void AAdvancedCombatCharacter::LaunchProjectile()
 	SpawnParams.Instigator = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	// 生成投掷物
+	// 生成投掷物（使用计算的初始朝向）
 	ACombatProjectile* Projectile = GetWorld()->SpawnActor<ACombatProjectile>(
-		ElementProjectileClass, 
-		SpawnLocation, 
-		SpawnRotation, 
+		ElementProjectileClass,
+		SpawnLocation,
+		InitialRotation, // 朝向飞行方向
 		SpawnParams
 	);
 
@@ -133,6 +155,9 @@ void AAdvancedCombatCharacter::LaunchProjectile()
 
 		// 应用倍率到投掷物
 		Projectile->SetProjectileProperties(SpeedMultiplier, DamageMultiplier);
+
+		// 初始化发射（会设置速度并确保朝向正确）
+		Projectile->InitializeLaunchWithAngle(ForwardDirection, 15.0f);
 
 		// 触发蓝图事件
 		OnProjectileLaunched(Projectile);
@@ -303,14 +328,6 @@ void AAdvancedCombatCharacter::GetProjectileLaunchParams(FVector& OutLocation, F
 		OutLocation = GetActorLocation() + FVector(0, 0, 100.0f);
 	}
 
-	// 获取发射方向（使用控制器旋转）
-	if (GetController())
-	{
-		OutRotation = GetControlRotation();
-	}
-	else
-	{
-		// 如果没有控制器，使用角色朝向
-		OutRotation = GetActorRotation();
-	}
+	// 旋转不再计算，仅作占位
+	OutRotation = FRotator::ZeroRotator;
 }

@@ -121,6 +121,23 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|Combat|Projectiles")
 	float GetCurrentSpeed() const;
 
+	/**
+	 * 初始化投掷物发射
+	 * @param ForwardDirection 发射前向方向
+	 * @param LaunchAngleDegrees 发射仰角（度）
+	 */
+	UFUNCTION(BlueprintCallable, Category="ElementalCombat|Combat|Projectiles")
+	void InitializeLaunchWithAngle(const FVector& ForwardDirection, float LaunchAngleDegrees);
+
+	/**
+	 * 计算使投掷物落在指定距离的发射角度
+	 * @param TargetDistance 目标水平距离
+	 * @param HeightDifference 高度差（目标高度-发射高度）
+	 * @return 需要的发射角度（度）
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="ElementalCombat|Combat|Projectiles")
+	float CalculateAngleForDistance(float TargetDistance, float HeightDifference = 0.0f) const;
+
 protected:
 	// 碰撞处理
 	UFUNCTION()

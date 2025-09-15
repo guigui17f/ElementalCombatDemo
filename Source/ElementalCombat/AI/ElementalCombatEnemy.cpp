@@ -154,10 +154,13 @@ void AElementalCombatEnemy::LaunchProjectile()
 		return;
 	}
 
-	// 获取发射位置和方向
+	// 获取发射位置
 	FVector SpawnLocation;
-	FRotator SpawnRotation;
+	FRotator SpawnRotation; // 占位，不会被使用
 	GetProjectileLaunchParams(SpawnLocation, SpawnRotation);
+
+	// AI始终向自己的前方发射
+	FVector ForwardDirection = GetActorForwardVector();
 
 	// 设置生成参数
 	FActorSpawnParameters SpawnParams;
@@ -165,11 +168,11 @@ void AElementalCombatEnemy::LaunchProjectile()
 	SpawnParams.Instigator = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	// 生成投掷物
+	// 暂时使用默认旋转生成（会被InitializeLaunchWithAngle覆盖）
 	ACombatProjectile* Projectile = GetWorld()->SpawnActor<ACombatProjectile>(
 		AIProjectileClass,
 		SpawnLocation,
-		SpawnRotation,
+		FRotator::ZeroRotator, // 暂时的，会被InitializeLaunchWithAngle覆盖
 		SpawnParams
 	);
 
@@ -183,6 +186,31 @@ void AElementalCombatEnemy::LaunchProjectile()
 
 		// 可以根据AI类型或难度设置不同的倍率
 		Projectile->SetProjectileProperties(SpeedMultiplier, DamageMultiplier);
+
+		// 计算到玩家的水平距离
+		float DistanceToPlayer = 800.0f; // 默认中距离
+		float HeightDifference = 0.0f;
+
+		if (UWorld* World = GetWorld())
+		{
+			if (ACharacter* PlayerCharacter = Cast<ACharacter>(World->GetFirstPlayerController()->GetPawn()))
+			{
+				FVector ToPlayer = PlayerCharacter->GetActorLocation() - SpawnLocation;
+				// 只计算水平距离
+				DistanceToPlayer = FVector(ToPlayer.X, ToPlayer.Y, 0.0f).Size();
+				// 计算高度差
+				HeightDifference = ToPlayer.Z;
+			}
+		}
+
+		// 基于投掷物速度计算发射角度
+		float LaunchAngle = Projectile->CalculateAngleForDistance(DistanceToPlayer, HeightDifference);
+
+		// 初始化发射（会设置正确的速度和朝向）
+		Projectile->InitializeLaunchWithAngle(ForwardDirection, LaunchAngle);
+
+		UE_LOG(LogTemp, Log, TEXT("%s: AI发射投掷物，目标距离=%.1f，计算角度=%.1f度"),
+			*GetName(), DistanceToPlayer, LaunchAngle);
 
 		// 触发蓝图事件
 		OnProjectileLaunched(Projectile);
@@ -259,21 +287,6 @@ void AElementalCombatEnemy::GetProjectileLaunchParams(FVector& OutLocation, FRot
 		OutLocation = GetActorLocation() + FVector(0, 0, 80.0f);
 	}
 
-	// 获取发射方向（朝向目标）
-	FVector TargetLocation = GetActorLocation() + GetActorForwardVector() * 1000.0f; // 默认前方
-
-	// 尝试获取玩家角色位置（简化版，不依赖黑板）
-	if (UWorld* World = GetWorld())
-	{
-		if (ACharacter* PlayerCharacter = Cast<ACharacter>(World->GetFirstPlayerController()->GetPawn()))
-		{
-			TargetLocation = PlayerCharacter->GetActorLocation();
-			// 瞄准目标中心
-			TargetLocation.Z += 50.0f;
-		}
-	}
-
-	// 计算朝向目标的旋转
-	FVector Direction = (TargetLocation - OutLocation).GetSafeNormal();
-	OutRotation = Direction.Rotation();
+	// 旋转不再计算，仅作占位
+	OutRotation = FRotator::ZeroRotator;
 }
