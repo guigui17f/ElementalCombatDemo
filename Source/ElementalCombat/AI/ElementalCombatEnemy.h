@@ -95,8 +95,11 @@ public:
 	float GetRangedAttackRange() const { return RangedAttackRange; }
 
 	// 重写受击方法，移除ragdoll效果
-	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, 
+	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent,
 	                        AController* EventInstigator, AActor* DamageCauser) override;
+
+	// 重写治疗方法，实现生命恢复
+	virtual void ApplyHealing(float Healing, AActor* Healer) override;
 
 protected:
 	// 获取发射参数

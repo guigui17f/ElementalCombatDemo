@@ -9,6 +9,8 @@
 #include "Variant_Combat/Interfaces/CombatDamageable.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "Combat/Elemental/ElementalComponent.h"
+#include "Combat/Elemental/ElementalTypes.h"
 
 ACombatProjectile::ACombatProjectile()
 {
@@ -172,7 +174,56 @@ void ACombatProjectile::ApplyDamageToTarget(AActor* Target, const FHitResult& Hi
 {
 	if (!Target) return;
 
-	// 尝试使用接口应用伤害
+	// 获取发射者的元素组件（如果有）
+	FElementalEffectData AttackerEffectData;
+	bool bHasElementalData = false;
+
+	if (AActor* MyOwner = GetOwner())
+	{
+		if (UElementalComponent* OwnerElemental = MyOwner->FindComponentByClass<UElementalComponent>())
+		{
+			EElementalType OwnerElement = OwnerElemental->GetCurrentElement();
+			bHasElementalData = OwnerElemental->GetElementEffectData(OwnerElement, AttackerEffectData);
+
+			if (bHasElementalData)
+			{
+				UE_LOG(LogTemp, Log, TEXT("CombatProjectile: Using elemental data from %s (Element: %d)"),
+					*MyOwner->GetName(), (int32)OwnerElement);
+			}
+		}
+	}
+
+	float FinalDamage = CurrentDamage;
+
+	// 如果目标有元素组件，通过它处理元素效果
+	if (UElementalComponent* TargetElemental = Target->FindComponentByClass<UElementalComponent>())
+	{
+		if (bHasElementalData)
+		{
+			// 处理元素伤害（包括相克、倍率、减伤等）
+			FinalDamage = TargetElemental->ProcessElementalDamage(
+				CurrentDamage, AttackerEffectData, GetOwner());
+
+			UE_LOG(LogTemp, Log, TEXT("CombatProjectile: Processed elemental damage on %s (%.1f -> %.1f)"),
+				*Target->GetName(), CurrentDamage, FinalDamage);
+
+			// 应用元素效果（减速、DOT、吸血等）
+			TargetElemental->ApplyElementalEffects(
+				AttackerEffectData, GetOwner(), FinalDamage);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("CombatProjectile: No elemental data available for projectile from %s"),
+				GetOwner() ? *GetOwner()->GetName() : TEXT("Unknown"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("CombatProjectile: Target %s has no ElementalComponent, using standard damage"),
+			*Target->GetName());
+	}
+
+	// 应用最终伤害
 	if (ICombatDamageable* DamageableTarget = Cast<ICombatDamageable>(Target))
 	{
 		// 计算击退方向和力度
@@ -181,13 +232,13 @@ void ACombatProjectile::ApplyDamageToTarget(AActor* Target, const FHitResult& Hi
 		FVector DamageImpulse = ImpactDirection * ImpactForce;
 
 		// 通过接口应用伤害
-		DamageableTarget->ApplyDamage(CurrentDamage, this, Hit.Location, DamageImpulse);
+		DamageableTarget->ApplyDamage(FinalDamage, this, Hit.Location, DamageImpulse);
 	}
 	else
 	{
 		// 使用标准伤害系统
 		FDamageEvent DamageEvent;
-		Target->TakeDamage(CurrentDamage, DamageEvent, nullptr, this);
+		Target->TakeDamage(FinalDamage, DamageEvent, nullptr, this);
 	}
 }
 

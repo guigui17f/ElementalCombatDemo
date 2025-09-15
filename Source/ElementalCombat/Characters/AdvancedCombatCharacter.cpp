@@ -331,3 +331,31 @@ void AAdvancedCombatCharacter::GetProjectileLaunchParams(FVector& OutLocation, F
 	// 旋转不再计算，仅作占位
 	OutRotation = FRotator::ZeroRotator;
 }
+
+void AAdvancedCombatCharacter::ApplyHealing(float Healing, AActor* Healer)
+{
+	if (Healing <= 0.0f)
+	{
+		return;
+	}
+
+	float OldHP = CurrentHP;
+
+	// 增加生命值，但不超过最大值
+	CurrentHP = FMath::Clamp(CurrentHP + Healing, 0.0f, MaxHP);
+
+	float ActualHealing = CurrentHP - OldHP;
+
+	if (ActualHealing > 0.0f)
+	{
+		// 更新生命条
+		if (LifeBarWidget)
+		{
+			LifeBarWidget->SetLifePercentage(CurrentHP / MaxHP);
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("%s: 恢复生命值 %.1f (%.1f -> %.1f / %.1f), 治疗者: %s"),
+			*GetName(), ActualHealing, OldHP, CurrentHP, MaxHP,
+			Healer ? *Healer->GetName() : TEXT("Unknown"));
+	}
+}

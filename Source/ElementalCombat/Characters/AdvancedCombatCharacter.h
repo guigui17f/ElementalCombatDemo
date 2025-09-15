@@ -91,9 +91,12 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	// 重写受击方法，移除ragdoll效果
-	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, 
+	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent,
 	                        AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void Landed(const FHitResult& Hit) override;
+
+	// 重写治疗方法，实现生命恢复
+	virtual void ApplyHealing(float Healing, AActor* Healer) override;
 
 protected:
 	// 初始化

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "ElementalTypes.h"
+#include "Engine/TimerHandle.h"
 #include "ElementalComponent.generated.h"
 
 class ACombatProjectile;
@@ -95,6 +96,49 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	UElementalDataAsset* GetElementalDataAsset() const { return ElementalDataAsset; }
 
+	// ========== 数据驱动的元素效果处理 ==========
+
+	/**
+	 * 处理元素伤害 - 完全基于数据配置
+	 * @param BaseDamage 基础伤害
+	 * @param AttackerEffectData 攻击者的效果数据
+	 * @param DamageCauser 造成伤害的Actor
+	 * @return 处理后的最终伤害
+	 */
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental")
+	float ProcessElementalDamage(
+		float BaseDamage,
+		const FElementalEffectData& AttackerEffectData,
+		AActor* DamageCauser
+	);
+
+	/**
+	 * 应用元素效果 - 基于数据字段
+	 * @param EffectData 效果数据配置
+	 * @param EffectCauser 造成效果的Actor
+	 * @param DamageDealt 造成的伤害（用于吸血计算）
+	 */
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental")
+	void ApplyElementalEffects(
+		const FElementalEffectData& EffectData,
+		AActor* EffectCauser,
+		float DamageDealt = 0.0f
+	);
+
+	// ========== 状态查询 ==========
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
+	bool IsSlowed() const { return bIsSlowed; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
+	bool IsBurning() const { return bIsBurning; }
+
+	// ========== 测试支持 ==========
+	/**
+	 * 清除所有活跃的元素效果（主要用于测试）
+	 */
+	UFUNCTION(BlueprintCallable, Category = "ElementalCombat|Combat|Elemental")
+	void ClearAllEffects();
+
 public:
 	// 元素变更委托
 	UPROPERTY(BlueprintAssignable, Category = "ElementalCombat|Combat|Elemental")
@@ -113,7 +157,33 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ElementalCombat|Combat|Elemental")
 	TMap<EElementalType, FElementalEffectData> ElementEffectDataMap;
 
+	// ========== 效果状态管理 ==========
+	// 减速效果
+	UPROPERTY(BlueprintReadOnly, Category = "ElementalCombat|Combat|Elemental")
+	bool bIsSlowed = false;
+
+	FTimerHandle SlowEffectTimerHandle;
+	float OriginalWalkSpeed = 0.0f;
+
+	// DOT效果
+	UPROPERTY(BlueprintReadOnly, Category = "ElementalCombat|Combat|Elemental")
+	bool bIsBurning = false;
+
+	FTimerHandle DotEffectTimerHandle;
+	float DotDamagePerTick = 0.0f;
+	int32 RemainingDotTicks = 0;
+	TWeakObjectPtr<AActor> DotCauser;
+
 private:
 	// 触发元素变更委托
 	void BroadcastElementChanged(EElementalType NewElement);
+
+	// 基于字段值的效果应用
+	void ApplySlowIfConfigured(const FElementalEffectData& EffectData);
+	void ApplyDotIfConfigured(const FElementalEffectData& EffectData, AActor* Causer);
+	void ApplyLifeStealIfConfigured(float DamageDealt, const FElementalEffectData& EffectData, AActor* Attacker);
+
+	// 效果结束回调
+	void OnSlowEffectEnd();
+	void OnDotEffectTick();
 };

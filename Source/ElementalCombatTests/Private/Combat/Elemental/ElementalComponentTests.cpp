@@ -273,3 +273,367 @@ bool FProjectileClassManagementTest::RunTest(const FString& Parameters)
 	FProjectileClassManagementTestImpl TestImpl;
 	return TestImpl.RunTest(Parameters);
 }
+
+// ========== 数据驱动的元素效果系统测试 ==========
+
+/**
+ * 数据驱动伤害处理测试
+ * 测试ProcessElementalDamage方法的所有功能
+ */
+class FProcessElementalDamageTestImpl : public FElementalCombatTestBase
+{
+public:
+	FProcessElementalDamageTestImpl()
+		: FElementalCombatTestBase(TEXT("ProcessElementalDamage"), false) {}
+
+	virtual bool RunTest(const FString& Parameters) override
+	{
+		UWorld* World = CreateTestWorld();
+		AActor* AttackerActor = World->SpawnActor<AActor>();
+		AActor* DefenderActor = World->SpawnActor<AActor>();
+
+		UElementalComponent* DefenderComponent = NewObject<UElementalComponent>(DefenderActor);
+		DefenderComponent->RegisterComponent();
+		DefenderComponent->SwitchElement(EElementalType::Earth);
+
+		// 测试1：基础伤害倍率应用（不依赖元素类型）
+		FElementalEffectData AttackerData;
+		AttackerData.Element = EElementalType::Metal;
+		AttackerData.DamageMultiplier = 1.5f; // 1.5倍伤害
+
+		float ProcessedDamage = DefenderComponent->ProcessElementalDamage(100.0f, AttackerData, AttackerActor);
+		TestNearlyEqual(TEXT("伤害倍率应用"), ProcessedDamage, 150.0f, 1.0f);
+
+		// 测试2：防御方减伤效果
+		FElementalEffectData DefenderData;
+		DefenderData.Element = EElementalType::Earth;
+		DefenderData.DamageReduction = 0.3f; // 30%减伤
+		DefenderComponent->SetElementEffectData(EElementalType::Earth, DefenderData);
+
+		ProcessedDamage = DefenderComponent->ProcessElementalDamage(100.0f, AttackerData, AttackerActor);
+		// 基础100 * 1.5倍率 * 0.7减伤 = 105
+		TestNearlyEqual(TEXT("减伤效果应用"), ProcessedDamage, 105.0f, 1.0f);
+
+		// 测试3：元素相克测试（水克火）
+		DefenderComponent->SwitchElement(EElementalType::Fire);
+		AttackerData.Element = EElementalType::Water;
+		AttackerData.DamageMultiplier = 1.0f;
+
+		ProcessedDamage = DefenderComponent->ProcessElementalDamage(100.0f, AttackerData, AttackerActor);
+		// 应该有相克加成（具体倍率由ElementalCalculator决定）
+		TestTrue(TEXT("元素相克有效果"), ProcessedDamage > 100.0f);
+
+		// 测试4：零值和边界情况
+		AttackerData.DamageMultiplier = 0.0f;
+		ProcessedDamage = DefenderComponent->ProcessElementalDamage(100.0f, AttackerData, AttackerActor);
+		TestNearlyEqual(TEXT("零倍率处理"), ProcessedDamage, 100.0f, 1.0f); // 应该使用默认1.0
+
+		return true;
+	}
+};
+
+ELEMENTAL_TEST(Combat.Elemental, ProcessElementalDamage)
+bool FProcessElementalDamageTest::RunTest(const FString& Parameters)
+{
+	FProcessElementalDamageTestImpl TestImpl;
+	return TestImpl.RunTest(Parameters);
+}
+
+/**
+ * 数据驱动效果应用测试
+ * 测试ApplyElementalEffects方法的所有效果
+ */
+class FApplyElementalEffectsTestImpl : public FElementalCombatTestBase
+{
+public:
+	FApplyElementalEffectsTestImpl()
+		: FElementalCombatTestBase(TEXT("ApplyElementalEffects"), false) {}
+
+	virtual bool RunTest(const FString& Parameters) override
+	{
+		UWorld* World = CreateTestWorld();
+		AActor* CauserActor = World->SpawnActor<AActor>();
+		AActor* TargetActor = World->SpawnActor<AActor>();
+
+		UElementalComponent* TargetComponent = NewObject<UElementalComponent>(TargetActor);
+		TargetComponent->RegisterComponent();
+
+		// 测试1：减速效果应用（基于字段值，不基于元素类型）
+		FElementalEffectData EffectData;
+		EffectData.Element = EElementalType::Metal; // 金元素
+		EffectData.SlowPercentage = 0.4f;           // 但有减速效果
+		EffectData.SlowDuration = 2.0f;
+
+		TestFalse(TEXT("应用前无减速"), TargetComponent->IsSlowed());
+		TargetComponent->ApplyElementalEffects(EffectData, CauserActor, 0.0f);
+		TestTrue(TEXT("金元素也能造成减速"), TargetComponent->IsSlowed());
+
+		// 测试2：DOT效果应用
+		EffectData.DotDamage = 15.0f;
+		EffectData.DotDuration = 3.0f;
+		EffectData.DotTickInterval = 0.5f;
+
+		TestFalse(TEXT("应用前无燃烧"), TargetComponent->IsBurning());
+		TargetComponent->ApplyElementalEffects(EffectData, CauserActor, 0.0f);
+		TestTrue(TEXT("金元素也能造成DOT"), TargetComponent->IsBurning());
+
+		// 测试3：吸血效果应用
+		EffectData.LifeStealPercentage = 0.3f;
+		// 吸血需要有伤害值
+		TargetComponent->ApplyElementalEffects(EffectData, CauserActor, 100.0f);
+		// 注意：吸血效果会尝试对CauserActor应用治疗，这里主要测试逻辑不崩溃
+
+		// 测试4：多效果组合
+		FElementalEffectData ComboEffect;
+		ComboEffect.Element = EElementalType::Water; // 水元素
+		ComboEffect.SlowPercentage = 0.6f;           // 有减速
+		ComboEffect.DotDamage = 20.0f;               // 也有DOT
+		ComboEffect.DotDuration = 4.0f;
+		ComboEffect.DotTickInterval = 1.0f;
+		ComboEffect.LifeStealPercentage = 0.25f;     // 还有吸血
+
+		// 清除之前的效果
+		TargetComponent->ClearAllEffects();
+		TestFalse(TEXT("清除后无减速"), TargetComponent->IsSlowed());
+		TestFalse(TEXT("清除后无燃烧"), TargetComponent->IsBurning());
+
+		// 应用组合效果
+		TargetComponent->ApplyElementalEffects(ComboEffect, CauserActor, 100.0f);
+		TestTrue(TEXT("组合效果：减速"), TargetComponent->IsSlowed());
+		TestTrue(TEXT("组合效果：DOT"), TargetComponent->IsBurning());
+
+		return true;
+	}
+};
+
+ELEMENTAL_TEST(Combat.Elemental, ApplyElementalEffects)
+bool FApplyElementalEffectsTest::RunTest(const FString& Parameters)
+{
+	FApplyElementalEffectsTestImpl TestImpl;
+	return TestImpl.RunTest(Parameters);
+}
+
+/**
+ * 效果状态管理测试
+ * 测试状态查询和效果清除
+ */
+class FElementalEffectStateTestImpl : public FElementalCombatTestBase
+{
+public:
+	FElementalEffectStateTestImpl()
+		: FElementalCombatTestBase(TEXT("ElementalEffectState"), false) {}
+
+	virtual bool RunTest(const FString& Parameters) override
+	{
+		UWorld* World = CreateTestWorld();
+		AActor* CauserActor = World->SpawnActor<AActor>();
+		AActor* TargetActor = World->SpawnActor<AActor>();
+
+		UElementalComponent* Component = NewObject<UElementalComponent>(TargetActor);
+		Component->RegisterComponent();
+
+		// 测试1：初始状态
+		TestFalse(TEXT("初始无减速"), Component->IsSlowed());
+		TestFalse(TEXT("初始无燃烧"), Component->IsBurning());
+
+		// 测试2：应用减速效果
+		FElementalEffectData SlowEffect;
+		SlowEffect.SlowPercentage = 0.5f;
+		SlowEffect.SlowDuration = 3.0f;
+		Component->ApplyElementalEffects(SlowEffect, CauserActor, 0.0f);
+		TestTrue(TEXT("减速状态正确"), Component->IsSlowed());
+		TestFalse(TEXT("仅减速无燃烧"), Component->IsBurning());
+
+		// 测试3：应用DOT效果
+		FElementalEffectData DotEffect;
+		DotEffect.DotDamage = 10.0f;
+		DotEffect.DotDuration = 2.0f;
+		DotEffect.DotTickInterval = 0.5f;
+		Component->ApplyElementalEffects(DotEffect, CauserActor, 0.0f);
+		TestTrue(TEXT("减速仍存在"), Component->IsSlowed());
+		TestTrue(TEXT("DOT状态正确"), Component->IsBurning());
+
+		// 测试4：效果刷新
+		FElementalEffectData NewSlowEffect;
+		NewSlowEffect.SlowPercentage = 0.8f; // 更强的减速
+		NewSlowEffect.SlowDuration = 5.0f;   // 更长的时间
+		Component->ApplyElementalEffects(NewSlowEffect, CauserActor, 0.0f);
+		TestTrue(TEXT("减速效果刷新"), Component->IsSlowed());
+		TestTrue(TEXT("DOT依然存在"), Component->IsBurning());
+
+		// 测试5：清除所有效果
+		Component->ClearAllEffects();
+		TestFalse(TEXT("清除后无减速"), Component->IsSlowed());
+		TestFalse(TEXT("清除后无燃烧"), Component->IsBurning());
+
+		return true;
+	}
+};
+
+ELEMENTAL_TEST(Combat.Elemental, ElementalEffectState)
+bool FElementalEffectStateTest::RunTest(const FString& Parameters)
+{
+	FElementalEffectStateTestImpl TestImpl;
+	return TestImpl.RunTest(Parameters);
+}
+
+/**
+ * 数据驱动灵活性测试
+ * 验证任意元素可配置任意效果的灵活性
+ */
+class FDataDrivenFlexibilityTestImpl : public FElementalCombatTestBase
+{
+public:
+	FDataDrivenFlexibilityTestImpl()
+		: FElementalCombatTestBase(TEXT("DataDrivenFlexibility"), false) {}
+
+	virtual bool RunTest(const FString& Parameters) override
+	{
+		UWorld* World = CreateTestWorld();
+		AActor* CauserActor = World->SpawnActor<AActor>();
+		AActor* TargetActor = World->SpawnActor<AActor>();
+
+		UElementalComponent* Component = NewObject<UElementalComponent>(TargetActor);
+		Component->RegisterComponent();
+
+		// 测试1：金元素配置减速效果（打破传统认知）
+		FElementalEffectData MetalWithSlow;
+		MetalWithSlow.Element = EElementalType::Metal;
+		MetalWithSlow.SlowPercentage = 0.6f;
+		MetalWithSlow.SlowDuration = 2.0f;
+		MetalWithSlow.DamageMultiplier = 1.3f; // 同时有伤害倍率
+
+		Component->ApplyElementalEffects(MetalWithSlow, CauserActor, 0.0f);
+		TestTrue(TEXT("金元素能造成减速"), Component->IsSlowed());
+
+		Component->ClearAllEffects();
+
+		// 测试2：水元素配置DOT效果（传统水元素不烧人）
+		FElementalEffectData WaterWithDot;
+		WaterWithDot.Element = EElementalType::Water;
+		WaterWithDot.DotDamage = 8.0f;
+		WaterWithDot.DotDuration = 4.0f;
+		WaterWithDot.DotTickInterval = 1.0f;
+		WaterWithDot.SlowPercentage = 0.3f; // 同时有减速
+
+		Component->ApplyElementalEffects(WaterWithDot, CauserActor, 0.0f);
+		TestTrue(TEXT("水元素能造成DOT"), Component->IsBurning());
+		TestTrue(TEXT("水元素也能减速"), Component->IsSlowed());
+
+		Component->ClearAllEffects();
+
+		// 测试3：超级元素（所有效果都有）
+		FElementalEffectData SuperElement;
+		SuperElement.Element = EElementalType::Fire;
+		SuperElement.DamageMultiplier = 2.0f;      // 高伤害
+		SuperElement.LifeStealPercentage = 0.4f;   // 吸血
+		SuperElement.SlowPercentage = 0.8f;        // 减速
+		SuperElement.SlowDuration = 3.0f;
+		SuperElement.DotDamage = 25.0f;            // DOT
+		SuperElement.DotDuration = 5.0f;
+		SuperElement.DotTickInterval = 0.8f;
+		SuperElement.DamageReduction = 0.2f;       // 减伤（作为防御配置）
+
+		Component->ApplyElementalEffects(SuperElement, CauserActor, 100.0f);
+		TestTrue(TEXT("超级元素：减速"), Component->IsSlowed());
+		TestTrue(TEXT("超级元素：DOT"), Component->IsBurning());
+		// 吸血和减伤需要通过其他方式验证
+
+		// 测试4：空配置处理
+		FElementalEffectData EmptyEffect;
+		EmptyEffect.Element = EElementalType::Earth;
+		// 所有效果值都是默认0
+
+		Component->ClearAllEffects();
+		Component->ApplyElementalEffects(EmptyEffect, CauserActor, 100.0f);
+		TestFalse(TEXT("空配置无减速"), Component->IsSlowed());
+		TestFalse(TEXT("空配置无DOT"), Component->IsBurning());
+
+		return true;
+	}
+};
+
+ELEMENTAL_TEST(Combat.Elemental, DataDrivenFlexibility)
+bool FDataDrivenFlexibilityTest::RunTest(const FString& Parameters)
+{
+	FDataDrivenFlexibilityTestImpl TestImpl;
+	return TestImpl.RunTest(Parameters);
+}
+
+/**
+ * 边界条件测试
+ * 测试边界值和异常情况处理
+ */
+class FElementalBoundaryTestImpl : public FElementalCombatTestBase
+{
+public:
+	FElementalBoundaryTestImpl()
+		: FElementalCombatTestBase(TEXT("ElementalBoundary"), false) {}
+
+	virtual bool RunTest(const FString& Parameters) override
+	{
+		UWorld* World = CreateTestWorld();
+		AActor* CauserActor = World->SpawnActor<AActor>();
+		AActor* TargetActor = World->SpawnActor<AActor>();
+
+		UElementalComponent* Component = NewObject<UElementalComponent>(TargetActor);
+		Component->RegisterComponent();
+
+		// 测试1：零值处理
+		FElementalEffectData ZeroValues;
+		ZeroValues.SlowPercentage = 0.0f;
+		ZeroValues.SlowDuration = 5.0f; // 有时间但无减速比例
+		ZeroValues.DotDamage = 0.0f;
+		ZeroValues.DotDuration = 3.0f;  // 有时间但无伤害
+		ZeroValues.LifeStealPercentage = 0.0f;
+
+		Component->ApplyElementalEffects(ZeroValues, CauserActor, 100.0f);
+		TestFalse(TEXT("零减速不应用"), Component->IsSlowed());
+		TestFalse(TEXT("零DOT不应用"), Component->IsBurning());
+
+		// 测试2：负值处理
+		FElementalEffectData NegativeValues;
+		NegativeValues.SlowPercentage = -0.5f;    // 负值
+		NegativeValues.SlowDuration = 2.0f;
+		NegativeValues.DotDamage = -10.0f;        // 负值
+		NegativeValues.DotDuration = 3.0f;
+		NegativeValues.LifeStealPercentage = -0.3f; // 负值
+
+		Component->ApplyElementalEffects(NegativeValues, CauserActor, 100.0f);
+		TestFalse(TEXT("负减速不应用"), Component->IsSlowed());
+		TestFalse(TEXT("负DOT不应用"), Component->IsBurning());
+
+		// 测试3：伤害处理边界值
+		FElementalEffectData AttackerData;
+		AttackerData.DamageMultiplier = -1.0f; // 负倍率
+
+		float Result = Component->ProcessElementalDamage(100.0f, AttackerData, CauserActor);
+		TestTrue(TEXT("负倍率结果非负"), Result >= 0.0f);
+
+		// 测试4：空指针保护
+		Result = Component->ProcessElementalDamage(100.0f, AttackerData, nullptr);
+		TestTrue(TEXT("空指针不崩溃"), Result >= 0.0f);
+
+		// 测试5：超大值处理
+		FElementalEffectData LargeValues;
+		LargeValues.DamageMultiplier = 1000.0f;  // 超大倍率
+		LargeValues.SlowPercentage = 5.0f;       // 超过100%
+		LargeValues.SlowDuration = 1.0f;
+		LargeValues.DamageReduction = 2.0f;      // 超过100%
+
+		Result = Component->ProcessElementalDamage(100.0f, LargeValues, CauserActor);
+		TestTrue(TEXT("超大倍率有结果"), Result > 100.0f);
+
+		Component->ApplyElementalEffects(LargeValues, CauserActor, 0.0f);
+		TestTrue(TEXT("超大减速比例应用"), Component->IsSlowed());
+
+		return true;
+	}
+};
+
+ELEMENTAL_TEST(Combat.Elemental, ElementalBoundary)
+bool FElementalBoundaryTest::RunTest(const FString& Parameters)
+{
+	FElementalBoundaryTestImpl TestImpl;
+	return TestImpl.RunTest(Parameters);
+}

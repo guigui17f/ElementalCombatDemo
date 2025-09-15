@@ -147,10 +147,39 @@ void AElementalCombatEnemy::LaunchProjectile()
 {
 	UE_LOG(LogTemp, Log, TEXT("%s: LaunchProjectile被调用"), *GetName());
 
-	// 检查是否有投掷物类
-	if (!AIProjectileClass)
+	// 优先使用元素特定的投掷物类（匹配玩家角色的行为）
+	UClass* ProjectileClassToUse = nullptr;
+	if (ElementalComponent)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s: AI投射物类未设置，无法发射投射物"), *GetName());
+		EElementalType CurrentElement = ElementalComponent->GetCurrentElement();
+		ProjectileClassToUse = ElementalComponent->GetCurrentProjectileClass();
+		if (ProjectileClassToUse)
+		{
+			UE_LOG(LogTemp, Log, TEXT("%s: 使用元素特定投掷物类 (元素: %d, 类: %s)"),
+				*GetName(), (int32)CurrentElement, *ProjectileClassToUse->GetName());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("%s: 当前元素 %d 没有特定投掷物类"),
+				*GetName(), (int32)CurrentElement);
+		}
+	}
+
+	// 如果没有元素特定的投掷物，使用默认的AI投掷物类
+	if (!ProjectileClassToUse)
+	{
+		ProjectileClassToUse = AIProjectileClass;
+		if (ProjectileClassToUse)
+		{
+			UE_LOG(LogTemp, Log, TEXT("%s: 使用默认AI投掷物类 (%s)"),
+				*GetName(), *ProjectileClassToUse->GetName());
+		}
+	}
+
+	// 检查是否有可用的投掷物类
+	if (!ProjectileClassToUse)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s: 没有可用的投射物类，无法发射投射物"), *GetName());
 		return;
 	}
 
@@ -170,7 +199,7 @@ void AElementalCombatEnemy::LaunchProjectile()
 
 	// 暂时使用默认旋转生成（会被InitializeLaunchWithAngle覆盖）
 	ACombatProjectile* Projectile = GetWorld()->SpawnActor<ACombatProjectile>(
-		AIProjectileClass,
+		ProjectileClassToUse,
 		SpawnLocation,
 		FRotator::ZeroRotator, // 暂时的，会被InitializeLaunchWithAngle覆盖
 		SpawnParams
@@ -289,4 +318,32 @@ void AElementalCombatEnemy::GetProjectileLaunchParams(FVector& OutLocation, FRot
 
 	// 旋转不再计算，仅作占位
 	OutRotation = FRotator::ZeroRotator;
+}
+
+void AElementalCombatEnemy::ApplyHealing(float Healing, AActor* Healer)
+{
+	if (Healing <= 0.0f)
+	{
+		return;
+	}
+
+	float OldHP = CurrentHP;
+
+	// 增加生命值，但不超过最大值
+	CurrentHP = FMath::Clamp(CurrentHP + Healing, 0.0f, MaxHP);
+
+	float ActualHealing = CurrentHP - OldHP;
+
+	if (ActualHealing > 0.0f)
+	{
+		// 更新生命条
+		if (LifeBarWidget)
+		{
+			LifeBarWidget->SetLifePercentage(CurrentHP / MaxHP);
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("%s: 恢复生命值 %.1f (%.1f -> %.1f / %.1f), 治疗者: %s"),
+			*GetName(), ActualHealing, OldHP, CurrentHP, MaxHP,
+			Healer ? *Healer->GetName() : TEXT("Unknown"));
+	}
 }
