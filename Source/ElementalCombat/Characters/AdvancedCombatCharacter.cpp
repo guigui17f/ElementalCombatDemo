@@ -8,6 +8,7 @@
 #include "Curves/CurveFloat.h"
 #include "EnhancedInputComponent.h"
 #include "Variant_Combat/UI/CombatLifeBar.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 AAdvancedCombatCharacter::AAdvancedCombatCharacter()
 {
@@ -26,6 +27,14 @@ void AAdvancedCombatCharacter::BeginPlay()
 	if (ElementalComponent)
 	{
 		ElementalComponent->SwitchElement(EElementalType::Earth);
+
+		// 应用初始元素颜色到材质
+		const FElementalEffectData* ElementData = ElementalComponent->GetElementEffectDataPtr(EElementalType::Earth);
+		if (ElementData)
+		{
+			UpdateMaterialColors(ElementData->ElementColor);
+		}
+
 		UE_LOG(LogTemp, Log, TEXT("%s: 初始化为土元素"), *GetName());
 	}
 }
@@ -74,9 +83,6 @@ void AAdvancedCombatCharacter::LaunchProjectile()
 		return;
 	}
 
-	// 计算蓄力时间
-	float ChargeTime = GetWorld()->GetTimeSeconds() - ChargeStartTime;
-	
 	// 获取发射位置
 	FVector SpawnLocation;
 	FRotator SpawnRotation; // 占位，不会被使用
@@ -120,37 +126,16 @@ void AAdvancedCombatCharacter::LaunchProjectile()
 
 	if (Projectile)
 	{
-		// 根据蓄力时间调整投掷物属性
-		float SpeedMultiplier = 1.0f;
-		float DamageMultiplier = 1.0f;
-
-		// 使用曲线计算倍率
-		if (ChargeSpeedCurve)
-		{
-			SpeedMultiplier = ChargeSpeedCurve->GetFloatValue(ChargeTime);
-		}
-		else
-		{
-			// 默认的蓄力倍率计算
-			SpeedMultiplier = GetChargeMultiplier(ChargeTime);
-		}
-
-		if (ChargeDamageCurve)
-		{
-			DamageMultiplier = ChargeDamageCurve->GetFloatValue(ChargeTime);
-		}
-		else
-		{
-			// 默认的蓄力倍率计算
-			DamageMultiplier = GetChargeMultiplier(ChargeTime);
-		}
+		// 设置投掷物属性（不受蓄力时间影响）
+		float SpeedMultiplier = 1.0f;  // 固定速度倍率
+		float DamageMultiplier = 1.0f; // 基础伤害倍率
 
 		// 获取当前元素的效果数据并应用到伤害倍率
 		const FElementalEffectData* ElementData = ElementalComponent->GetElementEffectDataPtr(CurrentElement);
 		if (ElementData)
 		{
 			// 应用元素的伤害倍率（金元素效果）
-			DamageMultiplier *= ElementData->DamageMultiplier;
+			DamageMultiplier = ElementData->DamageMultiplier;
 		}
 
 		// 应用倍率到投掷物
@@ -174,7 +159,7 @@ void AAdvancedCombatCharacter::LaunchProjectile()
 		default: ElementName = TEXT("无"); break;
 		}
 		
-		UE_LOG(LogTemp, Log, TEXT("%s 发射了 %s 元素投掷物，伤害倍率: %.2f"), 
+		UE_LOG(LogTemp, Log, TEXT("%s 发射了 %s 元素投掷物，元素伤害倍率: %.2f"),
 			*GetName(), *ElementName, DamageMultiplier);
 	}
 
@@ -231,6 +216,13 @@ void AAdvancedCombatCharacter::SwitchToElement(EElementalType NewElement)
 
 	// 切换元素
 	ElementalComponent->SwitchElement(NewElement);
+
+	// 应用元素颜色到材质
+	const FElementalEffectData* ElementData = ElementalComponent->GetElementEffectDataPtr(NewElement);
+	if (ElementData)
+	{
+		UpdateMaterialColors(ElementData->ElementColor);
+	}
 
 	// 输出调试信息
 	FString ElementName;
@@ -358,4 +350,48 @@ void AAdvancedCombatCharacter::ApplyHealing(float Healing, AActor* Healer)
 			*GetName(), ActualHealing, OldHP, CurrentHP, MaxHP,
 			Healer ? *Healer->GetName() : TEXT("Unknown"));
 	}
+}
+
+void AAdvancedCombatCharacter::UpdateMaterialColors(FLinearColor Color)
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	if (!MeshComp)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s: 无法获取骨骼网格组件"), *GetName());
+		return;
+	}
+
+	// 获取所有材质实例
+	TArray<UMaterialInterface*> Materials = MeshComp->GetMaterials();
+
+	for (int32 i = 0; i < Materials.Num(); i++)
+	{
+		UMaterialInterface* Material = Materials[i];
+		if (!Material)
+		{
+			continue;
+		}
+
+		// 尝试获取现有的动态材质实例
+		UMaterialInstanceDynamic* DynMaterial = Cast<UMaterialInstanceDynamic>(Material);
+
+		// 如果不是动态材质实例，创建一个
+		if (!DynMaterial)
+		{
+			DynMaterial = UMaterialInstanceDynamic::Create(Material, this);
+			if (DynMaterial)
+			{
+				MeshComp->SetMaterial(i, DynMaterial);
+			}
+		}
+
+		// 设置OverlayColor参数
+		if (DynMaterial)
+		{
+			DynMaterial->SetVectorParameterValue(FName("OverlayColor"), Color);
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("%s: 更新材质颜色为 (%.2f, %.2f, %.2f, %.2f)"),
+		*GetName(), Color.R, Color.G, Color.B, Color.A);
 }

@@ -108,6 +108,9 @@ protected:
 	// 获取发射位置和方向
 	void GetProjectileLaunchParams(FVector& OutLocation, FRotator& OutRotation) const;
 
+	// 更新材质颜色
+	void UpdateMaterialColors(FLinearColor Color);
+
 	// 蓝图事件 - 投掷物发射时
 	UFUNCTION(BlueprintImplementableEvent, Category="ElementalCombat|Characters")
 	void OnProjectileLaunched(ACombatProjectile* Projectile);

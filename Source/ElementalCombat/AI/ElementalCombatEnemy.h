@@ -105,6 +105,9 @@ protected:
 	// 获取发射参数
 	void GetProjectileLaunchParams(FVector& OutLocation, FRotator& OutRotation) const;
 
+	// 更新材质颜色
+	void UpdateMaterialColors(FLinearColor Color);
+
 	// 蓝图事件 - 远程攻击开始
 	UFUNCTION(BlueprintImplementableEvent, Category="ElementalCombat|AI")
 	void OnRangedAttackStarted();

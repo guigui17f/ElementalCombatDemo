@@ -45,6 +45,8 @@ struct ELEMENTALCOMBAT_API FElementalEffectData
 		DotDuration = 0.0f;
 		DamageReduction = 0.0f;
 		ProjectileClass = nullptr;
+		ElementColor = FLinearColor::White;
+		EffectDescription = FText::GetEmpty();
 	}
 
 	// 元素类型标识
@@ -83,6 +85,14 @@ struct ELEMENTALCOMBAT_API FElementalEffectData
 	// 投掷物类
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental")
 	UClass* ProjectileClass;
+
+	// 元素代表颜色
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental")
+	FLinearColor ElementColor;
+
+	// 元素伤害效果描述
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ElementalCombat|Combat|Elemental", meta = (MultiLine = "true"))
+	FText EffectDescription;
 };
 
 /**

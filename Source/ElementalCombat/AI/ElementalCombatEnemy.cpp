@@ -8,6 +8,7 @@
 #include "Variant_Combat/UI/CombatLifeBar.h"
 #include "Combat/Elemental/ElementalComponent.h"
 #include "Combat/Elemental/ElementalDataAsset.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 AElementalCombatEnemy::AElementalCombatEnemy()
 {
@@ -44,6 +45,13 @@ void AElementalCombatEnemy::BeginPlay()
 				int32 RandomIndex = FMath::RandRange(0, ConfiguredElements.Num() - 1);
 				EElementalType SelectedElement = ConfiguredElements[RandomIndex];
 				ElementalComponent->SwitchElement(SelectedElement);
+
+				// 应用元素颜色到材质
+				const FElementalEffectData* ElementData = ElementalComponent->GetElementEffectDataPtr(SelectedElement);
+				if (ElementData)
+				{
+					UpdateMaterialColors(ElementData->ElementColor);
+				}
 
 				UE_LOG(LogTemp, Log, TEXT("%s: 随机选择了 %d 元素"),
 					*GetName(), (int32)SelectedElement);
@@ -346,4 +354,48 @@ void AElementalCombatEnemy::ApplyHealing(float Healing, AActor* Healer)
 			*GetName(), ActualHealing, OldHP, CurrentHP, MaxHP,
 			Healer ? *Healer->GetName() : TEXT("Unknown"));
 	}
+}
+
+void AElementalCombatEnemy::UpdateMaterialColors(FLinearColor Color)
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	if (!MeshComp)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s: 无法获取骨骼网格组件"), *GetName());
+		return;
+	}
+
+	// 获取所有材质实例
+	TArray<UMaterialInterface*> Materials = MeshComp->GetMaterials();
+
+	for (int32 i = 0; i < Materials.Num(); i++)
+	{
+		UMaterialInterface* Material = Materials[i];
+		if (!Material)
+		{
+			continue;
+		}
+
+		// 尝试获取现有的动态材质实例
+		UMaterialInstanceDynamic* DynMaterial = Cast<UMaterialInstanceDynamic>(Material);
+
+		// 如果不是动态材质实例，创建一个
+		if (!DynMaterial)
+		{
+			DynMaterial = UMaterialInstanceDynamic::Create(Material, this);
+			if (DynMaterial)
+			{
+				MeshComp->SetMaterial(i, DynMaterial);
+			}
+		}
+
+		// 设置OverlayColor参数
+		if (DynMaterial)
+		{
+			DynMaterial->SetVectorParameterValue(FName("OverlayColor"), Color);
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("%s: 更新材质颜色为 (%.2f, %.2f, %.2f, %.2f)"),
+		*GetName(), Color.R, Color.G, Color.B, Color.A);
 }
