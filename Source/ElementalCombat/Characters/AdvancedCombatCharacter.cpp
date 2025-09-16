@@ -11,6 +11,9 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "UI/ElementalHUDWidget.h"
+#include "Blueprint/UserWidget.h"
+#include "Engine/LocalPlayer.h"
 
 AAdvancedCombatCharacter::AAdvancedCombatCharacter()
 {
@@ -19,6 +22,9 @@ AAdvancedCombatCharacter::AAdvancedCombatCharacter()
 
 	// 创建元素组件
 	ElementalComponent = CreateDefaultSubobject<UElementalComponent>(TEXT("ElementalComponent"));
+
+	// 设置默认的HUD类为C++类
+	ElementalHUDClass = UElementalHUDWidget::StaticClass();
 }
 
 void AAdvancedCombatCharacter::BeginPlay()
@@ -38,6 +44,18 @@ void AAdvancedCombatCharacter::BeginPlay()
 		}
 
 		UE_LOG(LogTemp, Log, TEXT("%s: 初始化为土元素"), *GetName());
+	}
+
+	// 创建元素HUD（仅对玩家角色）
+	UE_LOG(LogTemp, Log, TEXT("%s: BeginPlay中检查是否为玩家角色 IsPlayerControlled() = %s"), *GetName(), IsPlayerControlled() ? TEXT("true") : TEXT("false"));
+	if (IsPlayerControlled())
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s: 开始调用CreateElementalHUD"), *GetName());
+		CreateElementalHUD();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s: 非玩家角色，不创建HUD"), *GetName());
 	}
 }
 
@@ -261,6 +279,12 @@ void AAdvancedCombatCharacter::SwitchToElement(EElementalType NewElement)
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("%s 切换到 %s 元素"), *GetName(), *ElementName);
+
+	// 更新HUD显示
+	if (ElementalHUDWidget)
+	{
+		ElementalHUDWidget->UpdateDisplay();
+	}
 }
 
 float AAdvancedCombatCharacter::GetChargeMultiplier(float ChargeTime) const
@@ -434,5 +458,67 @@ void AAdvancedCombatCharacter::DoRangedAttack()
 			// 如果没有动画，直接结束攻击状态
 			bIsAttacking = false;
 		}
+	}
+}
+
+void AAdvancedCombatCharacter::CreateElementalHUD()
+{
+	// 输出调试信息
+	UE_LOG(LogTemp, Log, TEXT("%s: 开始创建元素HUD"), *GetName());
+	UE_LOG(LogTemp, Log, TEXT("%s: IsPlayerControlled() = %s"), *GetName(), IsPlayerControlled() ? TEXT("true") : TEXT("false"));
+
+	// Only create HUD for player-controlled characters
+	if (!IsPlayerControlled())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s: 不是玩家控制的角色，跳过HUD创建"), *GetName());
+		return;
+	}
+
+	// 如果没有设置HUD类，使用默认的C++类
+	TSubclassOf<UElementalHUDWidget> WidgetClass = ElementalHUDClass;
+	if (!WidgetClass)
+	{
+		WidgetClass = UElementalHUDWidget::StaticClass();
+		UE_LOG(LogTemp, Warning, TEXT("%s: ElementalHUDClass为空，使用默认的UElementalHUDWidget类"), *GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s: 使用配置的ElementalHUDClass"), *GetName());
+	}
+
+	// Get the player controller and local player
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s: 无法获取PlayerController"), *GetName());
+		return;
+	}
+
+	ULocalPlayer* LocalPlayer = PC->GetLocalPlayer();
+	if (!LocalPlayer)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s: 无法获取LocalPlayer"), *GetName());
+		return;
+	}
+
+	// Create the HUD widget
+	ElementalHUDWidget = CreateWidget<UElementalHUDWidget>(PC, WidgetClass);
+	if (ElementalHUDWidget)
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s: ElementalHUDWidget创建成功"), *GetName());
+
+		// Set the elemental component reference
+		ElementalHUDWidget->SetElementalComponent(ElementalComponent);
+		UE_LOG(LogTemp, Log, TEXT("%s: 设置ElementalComponent引用完成"), *GetName());
+
+		// Add to viewport
+		ElementalHUDWidget->AddToViewport();
+		UE_LOG(LogTemp, Log, TEXT("%s: 添加到视口完成"), *GetName());
+
+		UE_LOG(LogTemp, Log, TEXT("%s: 创建元素HUD成功"), *GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s: 无法创建元素HUD控件"), *GetName());
 	}
 }

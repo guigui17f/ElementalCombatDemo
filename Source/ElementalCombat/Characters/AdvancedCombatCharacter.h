@@ -13,6 +13,7 @@ class UElementalComponent;
 class UInputAction;
 class UCombatLifeBar;
 class UAnimMontage;
+class UElementalHUDWidget;
 
 /**
  * 高级战斗角色类
@@ -53,6 +54,10 @@ protected:
 
 	// 蓄力时间记录
 	float ChargeStartTime = 0.0f;
+
+	// 元素HUD控件
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ElementalCombat|Characters")
+	TSubclassOf<UElementalHUDWidget> ElementalHUDClass;
 
 	// 元素切换输入动作
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ElementalCombat|Characters")
@@ -119,7 +124,15 @@ protected:
 	// 执行远程攻击动画
 	void DoRangedAttack();
 
+	// 创建和设置元素HUD
+	void CreateElementalHUD();
+
 	// 蓝图事件 - 投掷物发射时
 	UFUNCTION(BlueprintImplementableEvent, Category="ElementalCombat|Characters")
 	void OnProjectileLaunched(ACombatProjectile* Projectile);
+
+private:
+	// 元素HUD控件实例
+	UPROPERTY()
+	TObjectPtr<UElementalHUDWidget> ElementalHUDWidget;
 };

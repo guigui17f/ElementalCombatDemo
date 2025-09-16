@@ -80,3 +80,45 @@ float UElementalCalculator::CalculateFinalDamage(float BaseDamage, EElementalTyp
 	// 确保最终伤害不为负数
 	return FMath::Max(FinalDamage, 0.0f);
 }
+
+EElementalType UElementalCalculator::GetElementThatCounters(EElementalType Element)
+{
+	// 五行相克：金克木、木克土、土克水、水克火、火克金
+	// 反向查找：谁克制这个元素？
+	switch (Element)
+	{
+	case EElementalType::Metal:
+		return EElementalType::Fire;  // 火克金
+	case EElementalType::Wood:
+		return EElementalType::Metal; // 金克木
+	case EElementalType::Water:
+		return EElementalType::Earth; // 土克水
+	case EElementalType::Fire:
+		return EElementalType::Water; // 水克火
+	case EElementalType::Earth:
+		return EElementalType::Wood;  // 木克土
+	default:
+		return EElementalType::None;
+	}
+}
+
+EElementalType UElementalCalculator::GetElementCounteredBy(EElementalType Element)
+{
+	// 五行相克：金克木、木克土、土克水、水克火、火克金
+	// 正向查找：这个元素克制谁？
+	switch (Element)
+	{
+	case EElementalType::Metal:
+		return EElementalType::Wood;  // 金克木
+	case EElementalType::Wood:
+		return EElementalType::Earth; // 木克土
+	case EElementalType::Water:
+		return EElementalType::Fire;  // 水克火
+	case EElementalType::Fire:
+		return EElementalType::Metal; // 火克金
+	case EElementalType::Earth:
+		return EElementalType::Water; // 土克水
+	default:
+		return EElementalType::None;
+	}
+}

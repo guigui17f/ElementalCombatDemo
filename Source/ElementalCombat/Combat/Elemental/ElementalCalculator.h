@@ -55,7 +55,7 @@ public:
 	/**
 	 * 计算最终伤害
 	 * 基础伤害 * 元素修正倍率，确保结果不为负数
-	 * 
+	 *
 	 * @param BaseDamage 基础伤害
 	 * @param AttackerElement 攻击者元素
 	 * @param DefenderElement 防御者元素
@@ -63,6 +63,24 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
 	static float CalculateFinalDamage(float BaseDamage, EElementalType AttackerElement, EElementalType DefenderElement, const UObject* WorldContextObject = nullptr);
+
+	/**
+	 * 获取克制指定元素的元素
+	 *
+	 * @param Element 目标元素
+	 * @return 克制该元素的元素，如果没有则返回None
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
+	static EElementalType GetElementThatCounters(EElementalType Element);
+
+	/**
+	 * 获取被指定元素克制的元素
+	 *
+	 * @param Element 源元素
+	 * @return 被该元素克制的元素，如果没有则返回None
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ElementalCombat|Combat|Elemental")
+	static EElementalType GetElementCounteredBy(EElementalType Element);
 
 private:
 	// 克制关系倍率常量

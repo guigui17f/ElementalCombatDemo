@@ -24,9 +24,10 @@ public class ElementalCombat : ModuleRules
 			"NiagaraCore"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "SlateCore" });
 
 		PublicIncludePaths.AddRange(new string[] {
+			"ElementalCombat/UI",
 			"ElementalCombat",
 			"ElementalCombat/AI",
 			"ElementalCombat/Animation",
@@ -41,7 +42,7 @@ public class ElementalCombat : ModuleRules
 			"ElementalCombat/Variant_Combat/UI"
 		});
 
-		// Uncomment if you are using Slate UI
+		// Slate UI is now enabled
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 
 		// Uncomment if you are using online features
