@@ -75,6 +75,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	UInputAction* SwitchToEarthAction;  // 5键 - 土
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ElementalCombat|Characters")
+	UInputAction* ExitMenuAction;       // ESC键 - 退出菜单
+
 public:
 	// 重写蓄力攻击结束，改为发射投掷物
 	virtual void DoChargedAttackEnd() override;
@@ -130,6 +133,9 @@ protected:
 	// 蓝图事件 - 投掷物发射时
 	UFUNCTION(BlueprintImplementableEvent, Category="ElementalCombat|Characters")
 	void OnProjectileLaunched(ACombatProjectile* Projectile);
+
+	// ESC键处理函数
+	void OnExitMenuPressed(const FInputActionValue& Value);
 
 private:
 	// 元素HUD控件实例

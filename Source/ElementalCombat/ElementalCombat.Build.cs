@@ -24,7 +24,9 @@ public class ElementalCombat : ModuleRules
 			"NiagaraCore"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "SlateCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			"SlateCore"
+		});
 
 		PublicIncludePaths.AddRange(new string[] {
 			"ElementalCombat/UI",
@@ -34,6 +36,7 @@ public class ElementalCombat : ModuleRules
 			"ElementalCombat/Characters",
 			"ElementalCombat/Combat",
 			"ElementalCombat/Combat/Projectiles",
+			"ElementalCombat/Controllers",
 			"ElementalCombat/Variant_Combat",
 			"ElementalCombat/Variant_Combat/AI",
 			"ElementalCombat/Variant_Combat/Animation",

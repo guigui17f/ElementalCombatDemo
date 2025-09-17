@@ -13,6 +13,7 @@
 #include "Animation/AnimMontage.h"
 #include "UI/ElementalHUDWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "Controllers/AdvancedPlayerController.h"
 #include "Engine/LocalPlayer.h"
 
 AAdvancedCombatCharacter::AAdvancedCombatCharacter()
@@ -232,6 +233,12 @@ void AAdvancedCombatCharacter::SetupPlayerInputComponent(UInputComponent* Player
 		if (SwitchToEarthAction)
 		{
 			EnhancedInputComponent->BindAction(SwitchToEarthAction, ETriggerEvent::Started, this, &AAdvancedCombatCharacter::SwitchToEarth);
+		}
+
+		// ESC键 - 退出菜单
+		if (ExitMenuAction)
+		{
+			EnhancedInputComponent->BindAction(ExitMenuAction, ETriggerEvent::Started, this, &AAdvancedCombatCharacter::OnExitMenuPressed);
 		}
 	}
 }
@@ -520,5 +527,18 @@ void AAdvancedCombatCharacter::CreateElementalHUD()
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s: 无法创建元素HUD控件"), *GetName());
+	}
+}
+
+void AAdvancedCombatCharacter::OnExitMenuPressed(const FInputActionValue& Value)
+{
+	// 获取玩家控制器
+	if (AAdvancedPlayerController* AdvancedPC = Cast<AAdvancedPlayerController>(GetController()))
+	{
+		AdvancedPC->ShowExitMenu();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Controller is not an AdvancedPlayerController"));
 	}
 }
