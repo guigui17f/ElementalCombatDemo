@@ -40,17 +40,14 @@ void AReusableEnemySpawner::ResetSpawner()
 {
 	// 重置生成计数
 	SpawnCount = OriginalSpawnCount;
-	
+
 	// 清理现有定时器
 	GetWorld()->GetTimerManager().ClearTimer(SpawnTimer);
-	
-	// 重置激活标志（如果允许重新激活）
-	if (bCanBeReactivated)
-	{
-		bHasBeenActivated = false;
-	}
 
-	UE_LOG(LogElementalAI, Log, TEXT("生成器 %s 已重置。生成数量: %d"), 
+	// 重置激活标志，为重新激活做准备
+	bHasBeenActivated = false;
+
+	UE_LOG(LogElementalAI, Log, TEXT("生成器 %s 已重置。生成数量: %d"),
 		*GetName(), SpawnCount);
 }
 
@@ -58,10 +55,11 @@ void AReusableEnemySpawner::SpawnerDepleted()
 {
 	// 调用父类逻辑激活后续Actor
 	Super::SpawnerDepleted();
-	
-	// 如果允许重新激活，准备下次使用
+
+	// 如果允许重新激活，重置激活标志以便下次激活
 	if (CanBeReactivated())
 	{
+		bHasBeenActivated = false;
 		UE_LOG(LogElementalAI, Log, TEXT("生成器 %s 队列耗尽但可以重新激活"), *GetName());
 	}
 	else
@@ -72,17 +70,17 @@ void AReusableEnemySpawner::SpawnerDepleted()
 
 void AReusableEnemySpawner::ActivateInteraction(AActor* ActivationInstigator)
 {
-	// 如果是第一次激活，使用父类逻辑
-	if (!bHasBeenActivated)
+	// 检查是否可以重新激活（除非是第一次激活）
+	if (bHasBeenActivated && !CanBeReactivated())
 	{
-		Super::ActivateInteraction(ActivationInstigator);
+		UE_LOG(LogElementalAI, Warning, TEXT("生成器 %s 无法重新激活"), *GetName());
 		return;
 	}
 
-	// 检查是否可以重新激活
-	if (!CanBeReactivated())
+	// 如果已经激活且当前正在生成（定时器活跃），忽略重复激活
+	if (bHasBeenActivated && GetWorld()->GetTimerManager().IsTimerActive(SpawnTimer))
 	{
-		UE_LOG(LogElementalAI, Warning, TEXT("生成器 %s 无法重新激活"), *GetName());
+		UE_LOG(LogElementalAI, Warning, TEXT("生成器 %s 已经在活跃状态"), *GetName());
 		return;
 	}
 
@@ -90,17 +88,25 @@ void AReusableEnemySpawner::ActivateInteraction(AActor* ActivationInstigator)
 	if (SpawnCount <= 0)
 	{
 		ResetSpawner();
-		CurrentReactivations++;
+		// 只有在重新激活时才增加计数器
+		if (bHasBeenActivated)
+		{
+			CurrentReactivations++;
+		}
 	}
 
-	// 如果当前没有活动的定时器，开始生成敌人
-	if (!GetWorld()->GetTimerManager().IsTimerActive(SpawnTimer))
+	// 设置激活标志并开始生成敌人
+	bHasBeenActivated = true;
+	SpawnEnemy();
+
+	if (CurrentReactivations > 0)
 	{
-		bHasBeenActivated = true;
-		SpawnEnemy();
-		
-		UE_LOG(LogElementalAI, Log, TEXT("生成器 %s 已重新激活 (次数: %d/%d)"), 
+		UE_LOG(LogElementalAI, Log, TEXT("生成器 %s 已重新激活 (次数: %d/%d)"),
 			*GetName(), CurrentReactivations, MaxReactivations);
+	}
+	else
+	{
+		UE_LOG(LogElementalAI, Log, TEXT("生成器 %s 首次激活"), *GetName());
 	}
 }
 
