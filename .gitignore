@@ -74,9 +74,7 @@ Plugins/**/Intermediate/*
 # Cache files for the editor to use
 DerivedDataCache/*
 
-Config/DefaultEditorPerProjectUserSettings.ini
-.idea/.idea.ElementalCombat.dir/.idea/vcs.xml
+.idea/.idea.ElementalCombat.dir/.idea/*
 .claude/settings.local.json
+Config/DefaultEditorPerProjectUserSettings.ini
 ElementalCombat.uproject.DotSettings.user
-.idea/.idea.ElementalCombat.dir/.idea/copilot.data.migration.agent.xml
-.idea/.idea.ElementalCombat.dir/.idea/copilot.data.migration.edit.xml
