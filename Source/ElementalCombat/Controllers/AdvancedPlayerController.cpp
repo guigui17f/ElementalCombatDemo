@@ -2,10 +2,41 @@
 
 #include "Controllers/AdvancedPlayerController.h"
 #include "UI/ExitMenuSubsystem.h"
+#include "UI/SFPSWidget.h"
 #include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
 
 AAdvancedPlayerController::AAdvancedPlayerController()
 {
+}
+
+void AAdvancedPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// 创建FPS显示控件
+	if (GEngine && GEngine->GameViewport)
+	{
+		FPSWidget = SNew(SFPSWidget);
+
+		// 添加到视口的右上角
+		GEngine->GameViewport->AddViewportWidgetContent(
+			FPSWidget.ToSharedRef(),
+			1 // ZOrder - 确保在最上层
+		);
+	}
+}
+
+void AAdvancedPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// 清理FPS控件
+	if (FPSWidget.IsValid() && GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->RemoveViewportWidgetContent(FPSWidget.ToSharedRef());
+		FPSWidget.Reset();
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void AAdvancedPlayerController::ShowExitMenu()
