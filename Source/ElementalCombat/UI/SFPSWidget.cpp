@@ -17,11 +17,11 @@ void SFPSWidget::Construct(const FArguments& InArgs)
 	ChildSlot
 	.HAlign(HAlign_Right)
 	.VAlign(VAlign_Top)
-	.Padding(10.0f, 10.0f, 10.0f, 10.0f)
+	.Padding(20.0f, 20.0f, 20.0f, 20.0f)
 	[
 		SAssignNew(FPSTextBlock, STextBlock)
 		.Text(FText::FromString(TEXT("FPS: 60")))
-		.Font(FCoreStyle::GetDefaultFontStyle("Regular", 14))
+		.Font(FCoreStyle::GetDefaultFontStyle("Regular", 16))
 		.ColorAndOpacity(FLinearColor::White)
 		.ShadowOffset(FVector2D(1.0f, 1.0f))
 		.ShadowColorAndOpacity(FLinearColor::Black)
