@@ -26,7 +26,7 @@ void SElementalHUD::Construct(const FArguments& InArgs)
 		[
 			SNew(SBorder)
 			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-			.BorderBackgroundColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.6f)) // 半透明黑色背景
+			.BorderBackgroundColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.4f)) // 半透明黑色背景
 			.Padding(FMargin(15.0f)) // 内容与边框的间距
 			[
 				SNew(SVerticalBox)
