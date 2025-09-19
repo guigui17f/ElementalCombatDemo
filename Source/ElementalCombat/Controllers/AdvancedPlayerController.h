@@ -7,6 +7,7 @@
 #include "AdvancedPlayerController.generated.h"
 
 class SFPSWidget;
+class SControlGuideWidget;
 
 /**
  * Advanced Player Controller that extends CombatPlayerController
@@ -32,4 +33,7 @@ public:
 private:
 	/** FPS显示控件 */
 	TSharedPtr<SFPSWidget> FPSWidget;
+
+	/** 操作指引控件 */
+	TSharedPtr<SControlGuideWidget> ControlGuideWidget;
 };
