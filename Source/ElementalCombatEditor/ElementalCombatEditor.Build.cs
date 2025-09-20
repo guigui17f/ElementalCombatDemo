@@ -16,25 +16,17 @@ public class ElementalCombatEditor : ModuleRules
 			"UnrealEd",
 			"EditorSubsystem",
 			"Slate",
-			"SlateCore",
-			"ToolMenus",
-			"EditorWidgets",
-			"EditorStyle",
-			"PropertyEditor",
-			"WorkspaceMenuStructure",
-			"ContentBrowser",
-			"AssetRegistry",
-			"LevelEditor"
+			"SlateCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"InputCore",
-			"DesktopPlatform",
 			"AssetTools",
-			"BlueprintGraph",
-			"KismetCompiler",
-			"SequencerWidgets",
-			"DeveloperSettings"
+			"ToolMenus",
+			"WorkspaceMenuStructure",
+			"ContentBrowser",
+			"AssetRegistry",
+			"LevelEditor"
 		});
 
 		PublicIncludePaths.AddRange(new string[] {

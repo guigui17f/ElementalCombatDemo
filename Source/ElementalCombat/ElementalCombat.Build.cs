@@ -16,16 +16,16 @@ public class ElementalCombat : ModuleRules
 			"EnhancedInput",
 			"AIModule",
 			"StateTreeModule",
-			"GameplayStateTreeModule",
-			"NavigationSystem",
-			"Slate",
-			"Niagara",
-			"NiagaraCore",
-			"RenderCore"
+			"GameplayStateTreeModule"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
-			"SlateCore"
+			"SlateCore",
+			"Slate",
+			"NavigationSystem",
+			"Niagara",
+			"NiagaraCore",
+			"RenderCore"
 		});
 
 		PublicIncludePaths.AddRange(new string[] {
