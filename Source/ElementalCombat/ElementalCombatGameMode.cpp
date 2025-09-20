@@ -9,6 +9,7 @@
 #include "EngineUtils.h"
 #include "AIController.h"
 #include "Components/StateTreeAIComponent.h"
+#include "HAL/IConsoleManager.h"
 
 AElementalCombatGameMode::AElementalCombatGameMode()
 {
@@ -27,6 +28,24 @@ void AElementalCombatGameMode::BeginPlay()
 
 	// 启动PSO加载流程
 	StartPSOLoading();
+}
+
+void AElementalCombatGameMode::SetPSOThreadPoolPercentage(int32 Percentage)
+{
+	// 获取控制台变量管理器
+	IConsoleManager& ConsoleManager = IConsoleManager::Get();
+	IConsoleVariable* CVarPSOThreadPool = ConsoleManager.FindConsoleVariable(TEXT("r.pso.PrecompileThreadPoolPercentOfHardwareThreads"));
+
+	if (CVarPSOThreadPool)
+	{
+		// 设置新值
+		CVarPSOThreadPool->Set(Percentage, ECVF_SetByCode);
+		UE_LOG(LogTemp, Log, TEXT("PSO Thread Pool Percentage set to: %d%%"), Percentage);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to find console variable r.pso.PrecompileThreadPoolPercentOfHardwareThreads"));
+	}
 }
 
 void AElementalCombatGameMode::StartPSOLoading()
@@ -52,6 +71,8 @@ void AElementalCombatGameMode::StartPSOLoading()
 
 	// 设置PSO加载模式为Fast模式
 	FShaderPipelineCache::SetBatchMode(FShaderPipelineCache::BatchMode::Fast);
+	// 设置PSO线程池为85%以加速编译
+	SetPSOThreadPoolPercentage(85);
 
 	// 获取初始PSO数量
 	InitialPSOCount = FShaderPipelineCache::NumPrecompilesRemaining();
@@ -160,6 +181,8 @@ void AElementalCombatGameMode::CompletePSOLoading()
 
 	// 切换PSO模式回Background模式
 	FShaderPipelineCache::SetBatchMode(FShaderPipelineCache::BatchMode::Background);
+	// 重置PSO线程池为60%以平衡游戏性能
+	SetPSOThreadPoolPercentage(60);
 
 	// 隐藏加载界面
 	if (PSOLoadingWidget)

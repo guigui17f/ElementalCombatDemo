@@ -68,6 +68,11 @@ public:
 
 private:
 	/**
+	 * Set PSO thread pool percentage
+	 */
+	void SetPSOThreadPoolPercentage(int32 Percentage);
+
+	/**
 	 * Start the PSO loading process
 	 */
 	void StartPSOLoading();
