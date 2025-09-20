@@ -6,7 +6,6 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "GameFramework/PlayerController.h"
-#include "Components/InputComponent.h"
 #include "EngineUtils.h"
 #include "AIController.h"
 #include "Components/StateTreeAIComponent.h"
