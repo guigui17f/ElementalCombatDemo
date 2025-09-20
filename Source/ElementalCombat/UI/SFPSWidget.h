@@ -6,10 +6,11 @@
 #include "Widgets/SCompoundWidget.h"
 
 class STextBlock;
+class AAdvancedPlayerController;
 
 /**
  * 简单的FPS显示Slate控件
- * 在屏幕右上角显示当前帧率
+ * 在屏幕右上角显示当前帧率和垂直同步状态
  */
 class ELEMENTALCOMBAT_API SFPSWidget : public SCompoundWidget
 {
@@ -27,12 +28,18 @@ private:
 	/** FPS文本显示控件 */
 	TSharedPtr<STextBlock> FPSTextBlock;
 
+	/** VSync状态文本显示控件 */
+	TSharedPtr<STextBlock> VSyncTextBlock;
+
 	/** 用于计算平均FPS的帧时间数组 */
 	TArray<float> FrameTimes;
 
 	/** 帧时间数组的当前索引 */
-	int32 FrameTimeIndex;
+	int32 FrameTimeIndex = 0;
 
 	/** 平滑窗口大小 */
 	static constexpr int32 SmoothingWindowSize = 30;
+
+	/** 获取当前垂直同步状态 */
+	bool GetVSyncStatus() const;
 };

@@ -56,6 +56,14 @@ void SControlGuideWidget::Construct(const FArguments& InArgs)
 		// 1/2/3/4/5 - 切换元素属性
 		+ SVerticalBox::Slot()
 		.AutoHeight()
+		.Padding(0.0f, 0.0f, 0.0f, 10.0f)
+		[
+			CreateGuideItem(TEXT("Tab"), TEXT("切换垂直同步"))
+		]
+
+		// ESC - 退出游戏
+		+ SVerticalBox::Slot()
+		.AutoHeight()
 		.Padding(0.0f, 0.0f, 0.0f, 0.0f)
 		[
 			CreateGuideItem(TEXT("ESC"), TEXT("退出游戏"))

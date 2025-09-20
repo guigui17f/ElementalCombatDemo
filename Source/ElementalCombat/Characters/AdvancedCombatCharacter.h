@@ -78,6 +78,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ElementalCombat|Characters")
 	UInputAction* ExitMenuAction;       // ESC键 - 退出菜单
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ElementalCombat|Characters")
+	UInputAction* ToggleVSyncAction;    // Tab键 - 切换垂直同步
+
 public:
 	// 重写蓄力攻击结束，改为发射投掷物
 	virtual void DoChargedAttackEnd() override;
@@ -136,6 +139,9 @@ protected:
 
 	// ESC键处理函数
 	void OnExitMenuPressed(const FInputActionValue& Value);
+
+	// Tab键处理函数 - 切换垂直同步
+	void OnToggleVSyncPressed(const FInputActionValue& Value);
 
 private:
 	// 元素HUD控件实例

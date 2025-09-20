@@ -6,6 +6,7 @@
 #include "UI/SControlGuideWidget.h"
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
+#include "GameFramework/GameUserSettings.h"
 
 AAdvancedPlayerController::AAdvancedPlayerController()
 {
@@ -14,6 +15,9 @@ AAdvancedPlayerController::AAdvancedPlayerController()
 void AAdvancedPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 设置默认垂直同步为开启
+	SetVSyncEnabled(true);
 
 	// 创建FPS显示控件
 	if (GEngine && GEngine->GameViewport)
@@ -69,5 +73,38 @@ void AAdvancedPlayerController::ShowExitMenu()
 		{
 			ExitMenuSubsystem->ShowExitMenu(this);
 		}
+	}
+}
+
+void AAdvancedPlayerController::ToggleVSync()
+{
+	// 切换垂直同步状态
+	bVSyncEnabled = !bVSyncEnabled;
+	SetVSyncEnabled(bVSyncEnabled);
+
+	UE_LOG(LogTemp, Log, TEXT("VSync toggled: %s"), bVSyncEnabled ? TEXT("Enabled") : TEXT("Disabled"));
+}
+
+void AAdvancedPlayerController::SetVSyncEnabled(bool bEnabled)
+{
+	bVSyncEnabled = bEnabled;
+
+	if (GEngine)
+	{
+		if (bEnabled)
+		{
+			// 开启垂直同步 - 移除帧率限制让垂直同步生效
+			GEngine->SetMaxFPS(0);
+			GEngine->GetGameUserSettings()->SetVSyncEnabled(true);
+		}
+		else
+		{
+			// 关闭垂直同步 - 设置为无限制帧率
+			GEngine->SetMaxFPS(0);
+			GEngine->GetGameUserSettings()->SetVSyncEnabled(false);
+		}
+
+		// 应用设置
+		GEngine->GetGameUserSettings()->ApplySettings(false);
 	}
 }

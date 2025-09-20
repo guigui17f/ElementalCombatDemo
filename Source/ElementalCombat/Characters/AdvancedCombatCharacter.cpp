@@ -240,6 +240,12 @@ void AAdvancedCombatCharacter::SetupPlayerInputComponent(UInputComponent* Player
 		{
 			EnhancedInputComponent->BindAction(ExitMenuAction, ETriggerEvent::Started, this, &AAdvancedCombatCharacter::OnExitMenuPressed);
 		}
+
+		// Tab键 - 切换垂直同步
+		if (ToggleVSyncAction)
+		{
+			EnhancedInputComponent->BindAction(ToggleVSyncAction, ETriggerEvent::Started, this, &AAdvancedCombatCharacter::OnToggleVSyncPressed);
+		}
 	}
 }
 
@@ -536,6 +542,19 @@ void AAdvancedCombatCharacter::OnExitMenuPressed(const FInputActionValue& Value)
 	if (AAdvancedPlayerController* AdvancedPC = Cast<AAdvancedPlayerController>(GetController()))
 	{
 		AdvancedPC->ShowExitMenu();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Controller is not an AdvancedPlayerController"));
+	}
+}
+
+void AAdvancedCombatCharacter::OnToggleVSyncPressed(const FInputActionValue& Value)
+{
+	// 获取玩家控制器
+	if (AAdvancedPlayerController* AdvancedPC = Cast<AAdvancedPlayerController>(GetController()))
+	{
+		AdvancedPC->ToggleVSync();
 	}
 	else
 	{

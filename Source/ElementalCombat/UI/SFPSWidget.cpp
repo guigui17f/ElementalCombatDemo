@@ -2,7 +2,11 @@
 
 #include "UI/SFPSWidget.h"
 #include "Widgets/Text/STextBlock.h"
+#include "Widgets/SBoxPanel.h"
 #include "Engine/Engine.h"
+#include "Engine/World.h"
+#include "Controllers/AdvancedPlayerController.h"
+#include "GameFramework/GameUserSettings.h"
 
 void SFPSWidget::Construct(const FArguments& InArgs)
 {
@@ -19,13 +23,34 @@ void SFPSWidget::Construct(const FArguments& InArgs)
 	.VAlign(VAlign_Top)
 	.Padding(20.0f, 20.0f, 20.0f, 20.0f)
 	[
-		SAssignNew(FPSTextBlock, STextBlock)
-		.Text(FText::FromString(TEXT("FPS: 60")))
-		.Font(FCoreStyle::GetDefaultFontStyle("Regular", 16))
-		.ColorAndOpacity(FLinearColor::White)
-		.ShadowOffset(FVector2D(1.0f, 1.0f))
-		.ShadowColorAndOpacity(FLinearColor::Black)
-		.Justification(ETextJustify::Right)
+		SNew(SVerticalBox)
+
+		// FPS显示
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.0f, 0.0f, 0.0f, 5.0f)
+		[
+			SAssignNew(FPSTextBlock, STextBlock)
+			.Text(FText::FromString(TEXT("FPS: 60")))
+			.Font(FCoreStyle::GetDefaultFontStyle("Regular", 16))
+			.ColorAndOpacity(FLinearColor::White)
+			.ShadowOffset(FVector2D(1.0f, 1.0f))
+			.ShadowColorAndOpacity(FLinearColor::Black)
+			.Justification(ETextJustify::Right)
+		]
+
+		// VSync状态显示
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SAssignNew(VSyncTextBlock, STextBlock)
+			.Text(FText::FromString(TEXT("VSync: ON")))
+			.Font(FCoreStyle::GetDefaultFontStyle("Regular", 14))
+			.ColorAndOpacity(FLinearColor::White)
+			.ShadowOffset(FVector2D(1.0f, 1.0f))
+			.ShadowColorAndOpacity(FLinearColor::Black)
+			.Justification(ETextJustify::Right)
+		]
 	];
 }
 
@@ -54,10 +79,39 @@ void SFPSWidget::Tick(const FGeometry& AllottedGeometry, const double InCurrentT
 	// 计算FPS并裁切到整数
 	int32 FPS = FMath::RoundToInt(1.0f / AverageFrameTime);
 
-	// 更新文本显示
+	// 更新FPS文本显示
 	if (FPSTextBlock.IsValid())
 	{
 		FString FPSText = FString::Printf(TEXT("FPS: %d"), FPS);
 		FPSTextBlock->SetText(FText::FromString(FPSText));
 	}
+
+	// 更新VSync状态显示
+	if (VSyncTextBlock.IsValid())
+	{
+		bool bVSyncEnabled = GetVSyncStatus();
+		FString VSyncText = bVSyncEnabled ? TEXT("VSync: ON") : TEXT("VSync: OFF");
+		VSyncTextBlock->SetText(FText::FromString(VSyncText));
+	}
+}
+
+bool SFPSWidget::GetVSyncStatus() const
+{
+	// 尝试获取当前世界的第一个玩家控制器
+	if (GEngine && GEngine->GetFirstLocalPlayerController(GWorld))
+	{
+		if (AAdvancedPlayerController* AdvancedPC = Cast<AAdvancedPlayerController>(GEngine->GetFirstLocalPlayerController(GWorld)))
+		{
+			return AdvancedPC->IsVSyncEnabled();
+		}
+	}
+
+	// 如果无法获取控制器，则从游戏设置中获取VSync状态
+	if (GEngine && GEngine->GetGameUserSettings())
+	{
+		return GEngine->GetGameUserSettings()->IsVSyncEnabled();
+	}
+
+	// 默认返回false
+	return false;
 }

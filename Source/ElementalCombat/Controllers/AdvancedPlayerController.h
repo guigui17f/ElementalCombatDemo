@@ -30,10 +30,25 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Exit Menu")
 	void ShowExitMenu();
 
+	/** Toggle VSync - called by Character input */
+	UFUNCTION(BlueprintCallable, Category = "Display")
+	void ToggleVSync();
+
+	/** Get current VSync status */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Display")
+	bool IsVSyncEnabled() const { return bVSyncEnabled; }
+
+private:
+	/** Set VSync enabled/disabled */
+	void SetVSyncEnabled(bool bEnabled);
+
 private:
 	/** FPS显示控件 */
 	TSharedPtr<SFPSWidget> FPSWidget;
 
 	/** 操作指引控件 */
 	TSharedPtr<SControlGuideWidget> ControlGuideWidget;
+
+	/** 垂直同步状态 */
+	bool bVSyncEnabled = true;
 };
