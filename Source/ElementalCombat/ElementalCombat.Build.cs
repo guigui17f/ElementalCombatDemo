@@ -18,10 +18,10 @@ public class ElementalCombat : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"NavigationSystem",
-			"UMG",
 			"Slate",
 			"Niagara",
-			"NiagaraCore"
+			"NiagaraCore",
+			"RenderCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {

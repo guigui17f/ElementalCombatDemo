@@ -3,6 +3,7 @@
 #include "ElementalCombatAIController.h"
 #include "ElementalCombatEnemy.h"
 #include "ElementalCombatGameInstance.h"
+#include "ElementalCombatGameMode.h"
 #include "Components/StateTreeAIComponent.h"
 
 AElementalCombatAIController::AElementalCombatAIController()
@@ -15,23 +16,14 @@ void AElementalCombatAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	// 验证StateTree组件是否正确初始化
-	if (UStateTreeAIComponent* StateTreeComp = FindComponentByClass<UStateTreeAIComponent>())
-	{
-		UE_LOG(LogTemp, Log, TEXT("StateTree组件已正确初始化"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("StateTree组件未找到！"));
-	}
-
+	// 先进行必要的初始化
 	// 缓存元素战斗敌人引用
 	ElementalCombatEnemy = Cast<AElementalCombatEnemy>(InPawn);
-	
+
 	if (ElementalCombatEnemy)
 	{
 		UE_LOG(LogTemp, Log, TEXT("元素战斗AI控制器：已控制元素战斗敌人 %s"), *ElementalCombatEnemy->GetName());
-		
+
 		// 从GameInstance随机获取AI配置
 		if (UElementalCombatGameInstance* GameInstance = Cast<UElementalCombatGameInstance>(GetWorld()->GetGameInstance()))
 		{
@@ -40,7 +32,7 @@ void AElementalCombatAIController::OnPossess(APawn* InPawn)
 		}
 		else
 		{
-			// 使用默认测试配置而不是空配置
+			// 使用默认测试配置
 			CurrentAIProfile = CreateDefaultTestProfile();
 			UE_LOG(LogTemp, Log, TEXT("使用默认测试AI配置: %s"), *CurrentAIProfile.ProfileName);
 		}
@@ -48,6 +40,29 @@ void AElementalCombatAIController::OnPossess(APawn* InPawn)
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("元素战斗AI控制器：被控制的Pawn不是元素战斗敌人"));
+	}
+
+	// 验证StateTree组件
+	if (UStateTreeAIComponent* StateTreeComp = FindComponentByClass<UStateTreeAIComponent>())
+	{
+		UE_LOG(LogTemp, Log, TEXT("StateTree组件已正确初始化"));
+
+		// 检查游戏是否处于PSO加载暂停状态
+		if (AElementalCombatGameMode* GameMode = Cast<AElementalCombatGameMode>(GetWorld()->GetAuthGameMode()))
+		{
+			if (GameMode->IsGameplayPausedForPSO())
+			{
+				// 停止AI逻辑但不跳过初始化
+				StopMovement();
+				StateTreeComp->StopLogic(TEXT("PSO Loading"));
+				UE_LOG(LogTemp, Log, TEXT("AI Controller %s initialized but paused due to PSO loading"), *GetName());
+				return; // 初始化完成后再返回
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("StateTree组件未找到！"));
 	}
 }
 
