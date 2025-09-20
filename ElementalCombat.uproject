@@ -15,6 +15,11 @@
 			]
 		},
 		{
+			"Name": "ElementalCombatEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		},
+		{
 			"Name": "ElementalCombatTests",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
