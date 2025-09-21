@@ -69,10 +69,10 @@ void AElementalCombatGameMode::StartPSOLoading()
 		}
 	}
 
-	// 设置PSO加载模式为Fast模式
-	FShaderPipelineCache::SetBatchMode(FShaderPipelineCache::BatchMode::Fast);
 	// 设置PSO线程池为85%以加速编译
 	SetPSOThreadPoolPercentage(85);
+	// 设置PSO加载模式为Fast模式
+	FShaderPipelineCache::SetBatchMode(FShaderPipelineCache::BatchMode::Fast);
 
 	// 获取初始PSO数量
 	InitialPSOCount = FShaderPipelineCache::NumPrecompilesRemaining();

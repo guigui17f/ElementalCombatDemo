@@ -74,6 +74,9 @@ Plugins/**/Intermediate/*
 # Cache files for the editor to use
 DerivedDataCache/*
 
+!Build/*/PipelineCaches/
+!Build/*/PipelineCaches/*
+
 .idea/.idea.ElementalCombat.dir/.idea/*
 .claude/settings.local.json
 Config/DefaultEditorPerProjectUserSettings.ini
